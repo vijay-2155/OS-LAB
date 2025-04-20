@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Paging Technique</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.25.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.25.0/components/prism-c.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.25.0/themes/prism-tomorrow.min.css">
+    <style>
+        .clipboard-button {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+            background: #334155;
+            color: white;
+            border: none;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            opacity: 0.7;
+        }
+        .clipboard-button:hover {
+            opacity: 1;
+        }
+        .code-container {
+            position: relative;
+        }
+        .sidebar {
+            width: 250px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            background-color: #1e293b;
+            color: white;
+            padding: 1rem;
+            overflow-y: auto;
+            z-index: 1000;
+            transition: transform 0.3s ease;
+        }
+        .sidebar-toggle {
+            position: fixed;
+            top: 0;
+            left: 0;
+            padding: 1rem;
+            background-color: #1e293b;
+            color: white;
+            cursor: pointer;
+            z-index: 1001;
+            display: none;
+        }
+        .main-content {
+            margin-left: 250px;
+            transition: margin-left 0.3s ease;
+            padding: 1rem;
+        }
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            .sidebar.active {
+                transform: translateX(0);
+            }
+            .sidebar-toggle {
+                display: block;
+            }
+            .main-content {
+                margin-left: 0;
+                padding: 1rem;
+            }
+            .main-content.sidebar-active {
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
+    <div class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle Sidebar">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+    </div>
+
+    <div class="sidebar" id="sidebar">
+        <div class="flex items-center space-x-2 mb-6">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+            </svg>
+            <h2 class="text-xl font-bold text-white">Experiments</h2>
+        </div>
+        <ul class="space-y-2">
+            <li><a href="exp1.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 1: Basic UNIX Commands</a></li>
+            <li><a href="exp2.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 2: UNIX System Calls</a></li>
+            <li><a href="exp3.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 3: Advanced UNIX Commands</a></li>
+            <li><a href="exp4.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 4: CPU Scheduling</a></li>
+            <li><a href="exp5.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 5: Port Control</a></li>
+            <li><a href="exp6.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 6: Thread Basics</a></li>
+            <li><a href="exp7.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 7: Producer-Consumer</a></li>
+            <li><a href="exp8.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 8: Memory Allocation</a></li>
+            <li><a href="exp9.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 9: Page Replacement</a></li>
+            <li><a href="exp10.html" class="block py-2 px-4 bg-blue-600 rounded transition duration-200">Experiment 10: Paging Technique</a></li>
+            <li><a href="exp11.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 11: Banker's Algorithm</a></li>
+            <li><a href="exp12.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 12: File Allocation</a></li>
+        </ul>
+    </div>
+
+    <div class="main-content" id="mainContent">
+        <div class="container mx-auto px-4 py-8 max-w-4xl">
+            <header class="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-6 rounded-t-lg shadow-lg">
+                <div class="flex items-center space-x-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-blue-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+                    </svg>
+                    <div>
+                        <h1 class="text-2xl md:text-3xl font-bold">Lab Experiment: Paging Technique</h1>
+                        <p class="text-blue-100 mt-1">Understanding Memory Management through Paging</p>
+                    </div>
+                </div>
+            </header>
+
+            <main class="bg-white p-6 rounded-b-lg shadow-lg mb-8">
+                <section class="mb-8">
+                    <h2 class="text-xl md:text-2xl font-bold text-blue-700 mb-4">Aim</h2>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p>To implement and understand the paging technique of memory management, including page table operations and address translation.</p>
+                    </div>
+                </section>
+
+                <section class="mb-8">
+                    <h2 class="text-xl md:text-2xl font-bold text-blue-700 mb-4">Theory</h2>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p class="mb-4">Paging is a memory management technique that:</p>
+                        
+                        <div class="mt-4">
+                            <h3 class="font-semibold text-lg">1. Basic Concepts</h3>
+                            <ul class="list-disc pl-6 mt-2">
+                                <li>Divides physical memory into fixed-size blocks called frames</li>
+                                <li>Divides logical memory into same-sized blocks called pages</li>
+                                <li>Uses a page table to map logical addresses to physical addresses</li>
+                                <li>Like a book with numbered pages and a table of contents</li>
+                            </ul>
+                        </div>
+
+                        <div class="mt-4">
+                            <h3 class="font-semibold text-lg">2. Address Translation</h3>
+                            <ul class="list-disc pl-6 mt-2">
+                                <li>Logical address = page number + page offset</li>
+                                <li>Page table maps page numbers to frame numbers</li>
+                                <li>Physical address = frame number + page offset</li>
+                                <li>Like finding a chapter (page) and paragraph (offset) in a book</li>
+                            </ul>
+                        </div>
+
+                        <div class="mt-4">
+                            <h3 class="font-semibold text-lg">3. Page Table Structure</h3>
+                            <ul class="list-disc pl-6 mt-2">
+                                <li>Each process has its own page table</li>
+                                <li>Page table entries contain frame numbers</li>
+                                <li>Additional bits for protection and status</li>
+                                <li>Like a book's index with page numbers and status</li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="mb-10 border-b pb-6">
+                    <h2 class="text-xl md:text-2xl font-bold text-blue-700 mb-4">Implementation</h2>
+                    
+                    <div class="bg-gray-50 p-4 rounded-lg mb-4">
+                        <h3 class="font-bold text-lg mb-2">Description</h3>
+                        <p>This program demonstrates the paging technique using a simple example:</p>
+                        <ul class="list-disc pl-6 mt-2">
+                            <li>Fixed page size of 4 bytes</li>
+                            <li>Simple page table implementation</li>
+                            <li>Address translation from logical to physical</li>
+                            <li>Clear visualization of the process</li>
+                        </ul>
+                    </div>
+
+                    <div class="code-container mt-4">
+                        <h3 class="font-bold text-lg mb-2">Program Code</h3>
+                        <pre class="language-c rounded-lg"><code>#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+
+// Let's keep it simple with small numbers
+#define PAGE_SIZE 4        // 4 bytes per page
+#define NUM_PAGES 4        // 4 pages in logical memory
+#define NUM_FRAMES 4       // 4 frames in physical memory
+
+// Structure for page table entry
+typedef struct {
+    int frame_number;      // Physical frame number
+    int valid;            // 1 if page is in memory, 0 otherwise
+} PageTableEntry;
+
+// Structure for memory frame
+typedef struct {
+    int data[PAGE_SIZE];   // Data stored in the frame
+    int used;             // 1 if frame is used, 0 otherwise
+} MemoryFrame;
+
+// Function to print page table
+void print_page_table(PageTableEntry page_table[], int num_pages) {
+    printf("\nPage Table:\n");
+    printf("Page\tFrame\tValid\n");
+    printf("-----------------\n");
+    for (int i = 0; i < num_pages; i++) {
+        printf("%d\t%d\t%d\n", i, page_table[i].frame_number, page_table[i].valid);
+    }
+}
+
+// Function to print physical memory
+void print_physical_memory(MemoryFrame physical_memory[], int num_frames) {
+    printf("\nPhysical Memory:\n");
+    printf("Frame\tData\n");
+    printf("-----------------\n");
+    for (int i = 0; i < num_frames; i++) {
+        printf("%d\t", i);
+        if (physical_memory[i].used) {
+            for (int j = 0; j < PAGE_SIZE; j++) {
+                printf("%d ", physical_memory[i].data[j]);
+            }
+        } else {
+            printf("Empty");
+        }
+        printf("\n");
+    }
+}
+
+// Function to translate logical address to physical address
+int translate_address(int logical_address, PageTableEntry page_table[], 
+                     MemoryFrame physical_memory[], int *value) {
+    int page_number = logical_address / PAGE_SIZE;
+    int offset = logical_address % PAGE_SIZE;
+    
+    printf("\nAddress Translation:\n");
+    printf("Logical Address: %d\n", logical_address);
+    printf("Page Number: %d\n", page_number);
+    printf("Offset: %d\n", offset);
+    
+    if (page_number >= NUM_PAGES) {
+        printf("Error: Page number out of range\n");
+        return -1;
+    }
+    
+    if (!page_table[page_number].valid) {
+        printf("Error: Page not in memory\n");
+        return -1;
+    }
+    
+    int frame_number = page_table[page_number].frame_number;
+    int physical_address = (frame_number * PAGE_SIZE) + offset;
+    
+    printf("Frame Number: %d\n", frame_number);
+    printf("Physical Address: %d\n", physical_address);
+    
+    *value = physical_memory[frame_number].data[offset];
+    return physical_address;
+}
+
+int main() {
+    // Initialize page table
+    PageTableEntry page_table[NUM_PAGES];
+    for (int i = 0; i < NUM_PAGES; i++) {
+        page_table[i].frame_number = i;  // Simple mapping: page i -> frame i
+        page_table[i].valid = 1;         // All pages initially valid
+    }
+    
+    // Initialize physical memory
+    MemoryFrame physical_memory[NUM_FRAMES];
+    for (int i = 0; i < NUM_FRAMES; i++) {
+        physical_memory[i].used = 1;
+        for (int j = 0; j < PAGE_SIZE; j++) {
+            physical_memory[i].data[j] = (i * PAGE_SIZE) + j;  // Fill with sample data
+        }
+    }
+    
+    printf("Paging Simulation\n");
+    printf("================\n");
+    
+    // Print initial state
+    print_page_table(page_table, NUM_PAGES);
+    print_physical_memory(physical_memory, NUM_FRAMES);
+    
+    // Test address translation
+    int logical_addresses[] = {0, 3, 5, 7, 10, 15};
+    int num_addresses = sizeof(logical_addresses) / sizeof(logical_addresses[0]);
+    
+    printf("\nTesting Address Translation:\n");
+    printf("==========================\n");
+    
+    for (int i = 0; i < num_addresses; i++) {
+        int value;
+        int physical_address = translate_address(logical_addresses[i], 
+                                               page_table, 
+                                               physical_memory, 
+                                               &value);
+        
+        if (physical_address != -1) {
+            printf("Value at address %d: %d\n\n", logical_addresses[i], value);
+        }
+    }
+    
+    return 0;
+}</code></pre>
+                        <button class="clipboard-button" onclick="copyToClipboard(this)">Copy Code</button>
+                    </div>
+
+                    <div class="mt-4">
+                        <h3 class="font-bold text-lg mb-2">Expected Output</h3>
+                        <div class="bg-gray-800 text-gray-100 p-4 rounded-lg">
+                            <pre class="text-sm">Paging Simulation
+================
+
+Page Table:
+Page    Frame   Valid
+-----------------
+0       0       1
+1       1       1
+2       2       1
+3       3       1
+
+Physical Memory:
+Frame   Data
+-----------------
+0       0 1 2 3
+1       4 5 6 7
+2       8 9 10 11
+3       12 13 14 15
+
+Testing Address Translation:
+==========================
+
+Address Translation:
+Logical Address: 0
+Page Number: 0
+Offset: 0
+Frame Number: 0
+Physical Address: 0
+Value at address 0: 0
+
+Address Translation:
+Logical Address: 3
+Page Number: 0
+Offset: 3
+Frame Number: 0
+Physical Address: 3
+Value at address 3: 3
+
+Address Translation:
+Logical Address: 5
+Page Number: 1
+Offset: 1
+Frame Number: 1
+Physical Address: 5
+Value at address 5: 5
+
+Address Translation:
+Logical Address: 7
+Page Number: 1
+Offset: 3
+Frame Number: 1
+Physical Address: 7
+Value at address 7: 7
+
+Address Translation:
+Logical Address: 10
+Page Number: 2
+Offset: 2
+Frame Number: 2
+Physical Address: 10
+Value at address 10: 10
+
+Address Translation:
+Logical Address: 15
+Page Number: 3
+Offset: 3
+Frame Number: 3
+Physical Address: 15
+Value at address 15: 15</pre>
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <h3 class="font-bold text-lg mb-2">Output Explanation</h3>
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <ul class="list-disc pl-6">
+                                <li>Initial state shows:
+                                    <ul class="list-disc pl-6 mt-2">
+                                        <li>Page table with 4 pages mapped to 4 frames</li>
+                                        <li>Physical memory with sample data in each frame</li>
+                                    </ul>
+                                </li>
+                                <li>Address translation process:
+                                    <ul class="list-disc pl-6 mt-2">
+                                        <li>Logical address is divided into page number and offset</li>
+                                        <li>Page table converts page number to frame number</li>
+                                        <li>Physical address is calculated using frame number and offset</li>
+                                        <li>Value is retrieved from physical memory</li>
+                                    </ul>
+                                </li>
+                                <li>Example: For logical address 5:
+                                    <ul class="list-disc pl-6 mt-2">
+                                        <li>Page number = 1 (5/4)</li>
+                                        <li>Offset = 1 (5%4)</li>
+                                        <li>Frame number = 1 (from page table)</li>
+                                        <li>Physical address = 5 (1*4 + 1)</li>
+                                        <li>Value = 5 (from physical memory)</li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="mb-8">
+                    <h2 class="text-xl md:text-2xl font-bold text-blue-700 mb-4">Summary</h2>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p>In this lab, we've learned about the paging technique of memory management:</p>
+                        <ul class="list-disc pl-6 mt-2">
+                            <li><strong>Page Table:</strong> Maps logical pages to physical frames</li>
+                            <li><strong>Address Translation:</strong> Converts logical addresses to physical addresses</li>
+                            <li><strong>Memory Organization:</strong> Fixed-size pages and frames</li>
+                        </ul>
+                        
+                        <div class="mt-4">
+                            <h3 class="font-bold text-lg">Key Points to Remember:</h3>
+                            <ul class="list-disc pl-6 mt-2">
+                                <li>Paging eliminates external fragmentation</li>
+                                <li>Page tables enable virtual memory</li>
+                                <li>Address translation is transparent to processes</li>
+                                <li>Page size affects system performance</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="mt-4">
+                            <h3 class="font-bold text-lg">Next Steps:</h3>
+                            <ul class="list-disc pl-6 mt-2">
+                                <li>Implement page table with protection bits</li>
+                                <li>Add support for page faults</li>
+                                <li>Study multi-level page tables</li>
+                                <li>Explore translation lookaside buffers (TLB)</li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+            </main>
+
+            <footer class="text-center text-gray-500 text-sm mt-8">
+                <p>© 2025 Paging Technique Lab Experiment</p>
+            </footer>
+        </div>
+    </div>
+
+    <script>
+        function copyToClipboard(button) {
+            const container = button.parentElement;
+            const codeBlock = container.querySelector('code');
+            const textToCopy = codeBlock.textContent;
+            
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                const originalText = button.textContent;
+                button.textContent = 'Code Copied!';
+                button.style.backgroundColor = '#10B981';
+                
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.style.backgroundColor = '#334155';
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+                button.textContent = 'Copy Failed!';
+                button.style.backgroundColor = '#EF4444';
+                
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.style.backgroundColor = '#334155';
+                }, 2000);
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            Prism.highlightAll();
+
+            // Sidebar toggle functionality
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.getElementById('mainContent');
+
+            sidebarToggle.addEventListener('click', (e) => {
+                e.stopPropagation();
+                sidebar.classList.toggle('active');
+                mainContent.classList.toggle('sidebar-active');
+            });
+
+            // Close sidebar when clicking outside on mobile
+            document.addEventListener('click', (e) => {
+                if (window.innerWidth <= 768) {
+                    if (!sidebar.contains(e.target) && !sidebarToggle.contains(e.target)) {
+                        sidebar.classList.remove('active');
+                        mainContent.classList.remove('sidebar-active');
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>

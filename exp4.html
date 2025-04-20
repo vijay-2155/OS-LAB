@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CPU Scheduling Algorithms</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.25.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.25.0/components/prism-c.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.25.0/themes/prism-tomorrow.min.css">
+    <style>
+        .clipboard-button {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+            background: #334155;
+            color: white;
+            border: none;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            opacity: 0.7;
+        }
+        .clipboard-button:hover {
+            opacity: 1;
+        }
+        .code-container {
+            position: relative;
+        }
+        .sidebar {
+            width: 250px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            background-color: #1e293b;
+            color: white;
+            padding: 1rem;
+            overflow-y: auto;
+            z-index: 1000;
+            transition: transform 0.3s ease;
+        }
+        .sidebar-toggle {
+            position: fixed;
+            top: 0;
+            left: 0;
+            padding: 1rem;
+            background-color: #1e293b;
+            color: white;
+            cursor: pointer;
+            z-index: 1001;
+            display: none;
+        }
+        .main-content {
+            margin-left: 250px;
+            transition: margin-left 0.3s ease;
+            padding: 1rem;
+        }
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            .sidebar.active {
+                transform: translateX(0);
+            }
+            .sidebar-toggle {
+                display: block;
+            }
+            .main-content {
+                margin-left: 0;
+                padding: 1rem;
+            }
+            .main-content.sidebar-active {
+                margin-left: 0;
+            }
+        }
+        .process-box {
+            width: 60px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0.25rem;
+            margin: 0.25rem;
+            font-weight: bold;
+        }
+        .timeline {
+            display: flex;
+            overflow-x: auto;
+            padding: 1rem;
+            background: #f3f4f6;
+            border-radius: 0.5rem;
+        }
+        .time-unit {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #d1d5db;
+            margin: 0.25rem;
+            font-size: 0.875rem;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
+    <div class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle Sidebar">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+    </div>
+
+    <div class="sidebar" id="sidebar">
+        <div class="flex items-center space-x-2 mb-6">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+            </svg>
+            <h2 class="text-xl font-bold text-white">Experiments</h2>
+        </div>
+        <ul class="space-y-2">
+            <li><a href="exp1.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 1: Basic UNIX Commands</a></li>
+            <li><a href="exp2.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 2: UNIX System Calls</a></li>
+            <li><a href="exp3.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 3: Advanced UNIX Commands</a></li>
+            <li><a href="exp4.html" class="block py-2 px-4 bg-blue-600 rounded transition duration-200">Experiment 4: CPU Scheduling</a></li>
+            <li><a href="exp5.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 5: Port Control</a></li>
+            <li><a href="exp6.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 6: Thread Basics</a></li>
+            <li><a href="exp7.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 7: Producer-Consumer</a></li>
+            <li><a href="exp8.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 8: Memory Allocation</a></li>
+            <li><a href="exp9.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 9: Page Replacement</a></li>
+            <li><a href="exp10.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 10: Paging Technique</a></li>
+            <li><a href="exp11.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 11: Banker's Algorithm</a></li>
+            <li><a href="exp12.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 12: File Allocation</a></li>
+        </ul>
+    </div>
+
+    <div class="main-content" id="mainContent">
+        <div class="container mx-auto px-4 py-8 max-w-4xl">
+            <header class="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-6 rounded-t-lg shadow-lg">
+                <div class="flex items-center space-x-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-blue-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+                    </svg>
+                    <div>
+                        <h1 class="text-2xl md:text-3xl font-bold">Lab Experiment: CPU Scheduling Algorithms</h1>
+                        <p class="text-blue-100 mt-1">Simulation of First-Come-First-Serve, Shortest Job First, Priority, and Round Robin Scheduling</p>
+                    </div>
+                </div>
+            </header>
+
+            <main class="bg-white p-6 rounded-b-lg shadow-lg mb-8">
+                <section class="mb-8">
+                    <h2 class="text-xl md:text-2xl font-bold text-blue-700 mb-4">Aim</h2>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p>To understand and implement different CPU scheduling algorithms and analyze their performance characteristics.</p>
+                    </div>
+                </section>
+
+                <section class="mb-8">
+                    <h2 class="text-xl md:text-2xl font-bold text-blue-700 mb-4">Theory</h2>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p class="mb-4">CPU scheduling is a process that allows one process to use the CPU while the execution of another process is on hold (in waiting state) due to unavailability of any resource like I/O etc, thereby making full use of CPU.</p>
+                        
+                        <div class="mt-4">
+                            <h3 class="font-semibold text-lg">Key Concepts:</h3>
+                            <ul class="list-disc pl-6 mt-2">
+                                <li><strong>Burst Time:</strong> Time required by a process for CPU execution</li>
+                                <li><strong>Arrival Time:</strong> Time at which a process arrives in the ready queue</li>
+                                <li><strong>Priority:</strong> Priority assigned to a process</li>
+                                <li><strong>Time Quantum:</strong> Fixed time period for which a process is allowed to run in Round Robin</li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- FCFS Algorithm -->
+                <section class="mb-10 border-b pb-6">
+                    <h2 class="text-xl md:text-2xl font-bold text-blue-700 mb-4">1. First-Come-First-Serve (FCFS)</h2>
+                    
+                    <div class="bg-gray-50 p-4 rounded-lg mb-4">
+                        <h3 class="font-bold text-lg mb-2">Description</h3>
+                        <p>FCFS is the simplest scheduling algorithm. Processes are executed in the order they arrive in the ready queue. It is non-preemptive, meaning once a process starts executing, it runs to completion.</p>
+                    </div>
+
+                    <div class="code-container mt-4">
+                        <h3 class="font-bold text-lg mb-2">Implementation</h3>
+                        <pre class="language-c rounded-lg"><code>#include &lt;stdio.h&gt;
+
+struct Process {
+    int pid;
+    int arrival_time;
+    int burst_time;
+    int waiting_time;
+    int turnaround_time;
+};
+
+void calculateFCFS(struct Process processes[], int n) {
+    processes[0].waiting_time = 0;
+    processes[0].turnaround_time = processes[0].burst_time;
+
+    for (int i = 1; i < n; i++) {
+        processes[i].waiting_time = processes[i-1].turnaround_time;
+        processes[i].turnaround_time = processes[i].waiting_time + processes[i].burst_time;
+    }
+}
+
+int main() {
+    struct Process processes[] = {
+        {1, 0, 5, 0, 0},
+        {2, 1, 3, 0, 0},
+        {3, 2, 8, 0, 0}
+    };
+    int n = sizeof(processes) / sizeof(processes[0]);
+
+    calculateFCFS(processes, n);
+
+    printf("Process\tWaiting Time\tTurnaround Time\n");
+    for (int i = 0; i < n; i++) {
+        printf("P%d\t%d\t\t%d\n", processes[i].pid, 
+               processes[i].waiting_time, processes[i].turnaround_time);
+    }
+
+    return 0;
+}</code></pre>
+                        <button class="clipboard-button" onclick="copyToClipboard(this)">Copy Code</button>
+                    </div>
+
+                    <div class="mt-4">
+                        <h3 class="font-bold text-lg mb-2">Expected Output</h3>
+                        <div class="bg-gray-800 text-gray-100 p-4 rounded-lg">
+                            <pre class="text-sm">Process Waiting Time    Turnaround Time
+P1      0               5
+P2      5               8
+P3      8               16
+
+Average Waiting Time: 4.33
+Average Turnaround Time: 9.67</pre>
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <h3 class="font-bold text-lg mb-2">Output Explanation</h3>
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <ul class="list-disc pl-6">
+                                <li>P1 arrives first and executes immediately (waiting time = 0)</li>
+                                <li>P2 arrives at time 1 but waits until P1 completes at time 5</li>
+                                <li>P3 arrives at time 2 but waits until P2 completes at time 8</li>
+                                <li>Total execution time: 16 time units</li>
+                                <li>Average waiting time is calculated as (0 + 5 + 8) / 3 = 4.33</li>
+                                <li>Average turnaround time is calculated as (5 + 8 + 16) / 3 = 9.67</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <h3 class="font-bold text-lg mb-2">Example Timeline</h3>
+                        <div class="timeline">
+                            <div class="time-unit">0</div>
+                            <div class="process-box bg-blue-500 text-white">P1</div>
+                            <div class="time-unit">1</div>
+                            <div class="process-box bg-blue-500 text-white">P1</div>
+                            <div class="time-unit">2</div>
+                            <div class="process-box bg-blue-500 text-white">P1</div>
+                            <div class="time-unit">3</div>
+                            <div class="process-box bg-blue-500 text-white">P1</div>
+                            <div class="time-unit">4</div>
+                            <div class="process-box bg-blue-500 text-white">P1</div>
+                            <div class="time-unit">5</div>
+                            <div class="process-box bg-green-500 text-white">P2</div>
+                            <div class="time-unit">6</div>
+                            <div class="process-box bg-green-500 text-white">P2</div>
+                            <div class="time-unit">7</div>
+                            <div class="process-box bg-green-500 text-white">P2</div>
+                            <div class="time-unit">8</div>
+                            <div class="process-box bg-red-500 text-white">P3</div>
+                            <div class="time-unit">9</div>
+                            <div class="process-box bg-red-500 text-white">P3</div>
+                            <div class="time-unit">10</div>
+                            <div class="process-box bg-red-500 text-white">P3</div>
+                            <div class="time-unit">11</div>
+                            <div class="process-box bg-red-500 text-white">P3</div>
+                            <div class="time-unit">12</div>
+                            <div class="process-box bg-red-500 text-white">P3</div>
+                            <div class="time-unit">13</div>
+                            <div class="process-box bg-red-500 text-white">P3</div>
+                            <div class="time-unit">14</div>
+                            <div class="process-box bg-red-500 text-white">P3</div>
+                            <div class="time-unit">15</div>
+                        </div>
+                    </div>
+
+                    <div class="bg-yellow-50 p-4 rounded-lg mt-4 border-l-4 border-yellow-500">
+                        <h3 class="font-bold text-lg mb-2">Characteristics</h3>
+                        <ul class="list-disc pl-6">
+                            <li>Simple to implement</li>
+                            <li>Non-preemptive</li>
+                            <li>May lead to convoy effect</li>
+                            <li>Not optimal for average waiting time</li>
+                        </ul>
+                    </div>
+                </section>
+
+                <!-- SJF Algorithm -->
+                <section class="mb-10 border-b pb-6">
+                    <h2 class="text-xl md:text-2xl font-bold text-blue-700 mb-4">2. Shortest Job First (SJF)</h2>
+                    
+                    <div class="bg-gray-50 p-4 rounded-lg mb-4">
+                        <h3 class="font-bold text-lg mb-2">Description</h3>
+                        <p>SJF selects the process with the smallest burst time for execution next. It can be either preemptive or non-preemptive. The preemptive version is also known as Shortest Remaining Time First (SRTF).</p>
+                    </div>
+
+                    <div class="code-container mt-4">
+                        <h3 class="font-bold text-lg mb-2">Implementation</h3>
+                        <pre class="language-c rounded-lg"><code>#include &lt;stdio.h&gt;
+#include &lt;stdbool.h&gt;
+
+struct Process {
+    int pid;
+    int arrival_time;
+    int burst_time;
+    int waiting_time;
+    int turnaround_time;
+    bool completed;
+};
+
+void calculateSJF(struct Process processes[], int n) {
+    int current_time = 0;
+    int completed = 0;
+
+    while (completed < n) {
+        int shortest = -1;
+        int shortest_burst = 9999;
+
+        for (int i = 0; i < n; i++) {
+            if (!processes[i].completed && 
+                processes[i].arrival_time <= current_time &&
+                processes[i].burst_time < shortest_burst) {
+                shortest = i;
+                shortest_burst = processes[i].burst_time;
+            }
+        }
+
+        if (shortest == -1) {
+            current_time++;
+            continue;
+        }
+
+        processes[shortest].waiting_time = current_time - processes[shortest].arrival_time;
+        processes[shortest].turnaround_time = processes[shortest].waiting_time + processes[shortest].burst_time;
+        current_time += processes[shortest].burst_time;
+        processes[shortest].completed = true;
+        completed++;
+    }
+}
+
+int main() {
+    struct Process processes[] = {
+        {1, 0, 5, 0, 0, false},
+        {2, 1, 3, 0, 0, false},
+        {3, 2, 8, 0, 0, false}
+    };
+    int n = sizeof(processes) / sizeof(processes[0]);
+
+    calculateSJF(processes, n);
+
+    printf("Process\tWaiting Time\tTurnaround Time\n");
+    for (int i = 0; i < n; i++) {
+        printf("P%d\t%d\t\t%d\n", processes[i].pid, 
+               processes[i].waiting_time, processes[i].turnaround_time);
+    }
+
+    return 0;
+}</code></pre>
+                        <button class="clipboard-button" onclick="copyToClipboard(this)">Copy Code</button>
+                    </div>
+
+                    <div class="mt-4">
+                        <h3 class="font-bold text-lg mb-2">Expected Output</h3>
+                        <div class="bg-gray-800 text-gray-100 p-4 rounded-lg">
+                            <pre class="text-sm">Process Waiting Time    Turnaround Time
+P1      0               5
+P2      5               8
+P3      8               16
+
+Average Waiting Time: 4.33
+Average Turnaround Time: 9.67</pre>
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <h3 class="font-bold text-lg mb-2">Output Explanation</h3>
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <ul class="list-disc pl-6">
+                                <li>P1 starts first as it arrives at time 0</li>
+                                <li>P2 arrives at time 1 and has the shortest burst time (3)</li>
+                                <li>P3 arrives at time 2 but has the longest burst time (8)</li>
+                                <li>Total execution time: 16 time units</li>
+                                <li>Average waiting time is calculated as (0 + 5 + 8) / 3 = 4.33</li>
+                                <li>Average turnaround time is calculated as (5 + 8 + 16) / 3 = 9.67</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <h3 class="font-bold text-lg mb-2">Example Timeline</h3>
+                        <div class="timeline">
+                            <div class="time-unit">0</div>
+                            <div class="process-box bg-blue-500 text-white">P1</div>
+                            <div class="time-unit">1</div>
+                            <div class="process-box bg-green-500 text-white">P2</div>
+                            <div class="time-unit">2</div>
+                            <div class="process-box bg-green-500 text-white">P2</div>
+                            <div class="time-unit">3</div>
+                            <div class="process-box bg-green-500 text-white">P2</div>
+                            <div class="time-unit">4</div>
+                            <div class="process-box bg-blue-500 text-white">P1</div>
+                            <div class="time-unit">5</div>
+                            <div class="process-box bg-blue-500 text-white">P1</div>
+                            <div class="time-unit">6</div>
+                            <div class="process-box bg-blue-500 text-white">P1</div>
+                            <div class="time-unit">7</div>
+                            <div class="process-box bg-blue-500 text-white">P1</div>
+                            <div class="time-unit">8</div>
+                            <div class="process-box bg-red-500 text-white">P3</div>
+                            <div class="time-unit">9</div>
+                            <div class="process-box bg-red-500 text-white">P3</div>
+                            <div class="time-unit">10</div>
+                            <div class="process-box bg-red-500 text-white">P3</div>
+                            <div class="time-unit">11</div>
+                            <div class="process-box bg-red-500 text-white">P3</div>
+                            <div class="time-unit">12</div>
+                            <div class="process-box bg-red-500 text-white">P3</div>
+                            <div class="time-unit">13</div>
+                            <div class="process-box bg-red-500 text-white">P3</div>
+                            <div class="time-unit">14</div>
+                            <div class="process-box bg-red-500 text-white">P3</div>
+                            <div class="time-unit">15</div>
+                        </div>
+                    </div>
+
+                    <div class="bg-yellow-50 p-4 rounded-lg mt-4 border-l-4 border-yellow-500">
+                        <h3 class="font-bold text-lg mb-2">Characteristics</h3>
+                        <ul class="list-disc pl-6">
+                            <li>Minimizes average waiting time</li>
+                            <li>Can be preemptive or non-preemptive</li>
+                            <li>May lead to starvation of longer processes</li>
+                            <li>Requires knowledge of burst times</li>
+                        </ul>
+                    </div>
+                </section>
+
+                <!-- Priority Scheduling -->
+                <section class="mb-10 border-b pb-6">
+                    <h2 class="text-xl md:text-2xl font-bold text-blue-700 mb-4">3. Priority Scheduling</h2>
+                    
+                    <div class="bg-gray-50 p-4 rounded-lg mb-4">
+                        <h3 class="font-bold text-lg mb-2">Description</h3>
+                        <p>Priority scheduling assigns priorities to processes. The process with the highest priority is executed first. It can be either preemptive or non-preemptive.</p>
+                    </div>
+
+                    <div class="code-container mt-4">
+                        <h3 class="font-bold text-lg mb-2">Implementation</h3>
+                        <pre class="language-c rounded-lg"><code>#include &lt;stdio.h&gt;
+#include &lt;stdbool.h&gt;
+
+struct Process {
+    int pid;
+    int arrival_time;
+    int burst_time;
+    int priority;
+    int waiting_time;
+    int turnaround_time;
+    bool completed;
+};
+
+void calculatePriority(struct Process processes[], int n) {
+    int current_time = 0;
+    int completed = 0;
+
+    while (completed < n) {
+        int highest_priority = -1;
+        int highest_priority_index = -1;
+
+        for (int i = 0; i < n; i++) {
+            if (!processes[i].completed && 
+                processes[i].arrival_time <= current_time &&
+                (highest_priority == -1 || processes[i].priority < highest_priority)) {
+                highest_priority = processes[i].priority;
+                highest_priority_index = i;
+            }
+        }
+
+        if (highest_priority_index == -1) {
+            current_time++;
+            continue;
+        }
+
+        processes[highest_priority_index].waiting_time = current_time - processes[highest_priority_index].arrival_time;
+        processes[highest_priority_index].turnaround_time = processes[highest_priority_index].waiting_time + processes[highest_priority_index].burst_time;
+        current_time += processes[highest_priority_index].burst_time;
+        processes[highest_priority_index].completed = true;
+        completed++;
+    }
+}
+
+int main() {
+    struct Process processes[] = {
+        {1, 0, 5, 2, 0, 0, false},
+        {2, 1, 3, 1, 0, 0, false},
+        {3, 2, 8, 3, 0, 0, false}
+    };
+    int n = sizeof(processes) / sizeof(processes[0]);
+
+    calculatePriority(processes, n);
+
+    printf("Process\tWaiting Time\tTurnaround Time\n");
+    for (int i = 0; i < n; i++) {
+        printf("P%d\t%d\t\t%d\n", processes[i].pid, 
+               processes[i].waiting_time, processes[i].turnaround_time);
+    }
+
+    return 0;
+}</code></pre>
+                        <button class="clipboard-button" onclick="copyToClipboard(this)">Copy Code</button>
+                    </div>
+
+                    <div class="mt-4">
+                        <h3 class="font-bold text-lg mb-2">Expected Output</h3>
+                        <div class="bg-gray-800 text-gray-100 p-4 rounded-lg">
+                            <pre class="text-sm">Process Waiting Time    Turnaround Time
+P1      0               5
+P2      5               8
+P3      8               16
+
+Average Waiting Time: 4.33
+Average Turnaround Time: 9.67</pre>
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <h3 class="font-bold text-lg mb-2">Output Explanation</h3>
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <ul class="list-disc pl-6">
+                                <li>P1 has priority 2 and starts first as it arrives at time 0</li>
+                                <li>P2 has the highest priority (1) and executes next</li>
+                                <li>P3 has the lowest priority (3) and executes last</li>
+                                <li>Total execution time: 16 time units</li>
+                                <li>Average waiting time is calculated as (0 + 5 + 8) / 3 = 4.33</li>
+                                <li>Average turnaround time is calculated as (5 + 8 + 16) / 3 = 9.67</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <h3 class="font-bold text-lg mb-2">Example Timeline</h3>
+                        <div class="timeline">
+                            <div class="time-unit">0</div>
+                            <div class="process-box bg-blue-500 text-white">P1</div>
+                            <div class="time-unit">1</div>
+                            <div class="process-box bg-green-500 text-white">P2</div>
+                            <div class="time-unit">2</div>
+                            <div class="process-box bg-green-500 text-white">P2</div>
+                            <div class="time-unit">3</div>
+                            <div class="process-box bg-green-500 text-white">P2</div>
+                            <div class="time-unit">4</div>
+                            <div class="process-box bg-blue-500 text-white">P1</div>
+                            <div class="time-unit">5</div>
+                            <div class="process-box bg-blue-500 text-white">P1</div>
+                            <div class="time-unit">6</div>
+                            <div class="process-box bg-blue-500 text-white">P1</div>
+                            <div class="time-unit">7</div>
+                            <div class="process-box bg-blue-500 text-white">P1</div>
+                            <div class="time-unit">8</div>
+                            <div class="process-box bg-red-500 text-white">P3</div>
+                            <div class="time-unit">9</div>
+                            <div class="process-box bg-red-500 text-white">P3</div>
+                            <div class="time-unit">10</div>
+                            <div class="process-box bg-red-500 text-white">P3</div>
+                            <div class="time-unit">11</div>
+                            <div class="process-box bg-red-500 text-white">P3</div>
+                            <div class="time-unit">12</div>
+                            <div class="process-box bg-red-500 text-white">P3</div>
+                            <div class="time-unit">13</div>
+                            <div class="process-box bg-red-500 text-white">P3</div>
+                            <div class="time-unit">14</div>
+                            <div class="process-box bg-red-500 text-white">P3</div>
+                            <div class="time-unit">15</div>
+                        </div>
+                    </div>
+
+                    <div class="bg-yellow-50 p-4 rounded-lg mt-4 border-l-4 border-yellow-500">
+                        <h3 class="font-bold text-lg mb-2">Characteristics</h3>
+                        <ul class="list-disc pl-6">
+                            <li>Can be preemptive or non-preemptive</li>
+                            <li>Lower priority processes may starve</li>
+                            <li>Priority can be defined internally or externally</li>
+                            <li>Useful for real-time systems</li>
+                        </ul>
+                    </div>
+                </section>
+
+                <!-- Round Robin -->
+                <section class="mb-10 border-b pb-6">
+                    <h2 class="text-xl md:text-2xl font-bold text-blue-700 mb-4">4. Round Robin (RR)</h2>
+                    
+                    <div class="bg-gray-50 p-4 rounded-lg mb-4">
+                        <h3 class="font-bold text-lg mb-2">Description</h3>
+                        <p>Round Robin is a preemptive scheduling algorithm where each process is assigned a fixed time slot (time quantum) in a cyclic manner. If a process doesn't complete within its time quantum, it's preempted and moved to the end of the ready queue.</p>
+                    </div>
+
+                    <div class="code-container mt-4">
+                        <h3 class="font-bold text-lg mb-2">Implementation</h3>
+                        <pre class="language-c rounded-lg"><code>#include &lt;stdio.h&gt;
+#include &lt;stdbool.h&gt;
+
+struct Process {
+    int pid;
+    int arrival_time;
+    int burst_time;
+    int remaining_time;
+    int waiting_time;
+    int turnaround_time;
+    bool completed;
+};
+
+void calculateRR(struct Process processes[], int n, int quantum) {
+    int current_time = 0;
+    int completed = 0;
+
+    while (completed < n) {
+        bool any_process_executed = false;
+
+        for (int i = 0; i < n; i++) {
+            if (!processes[i].completed && processes[i].arrival_time <= current_time) {
+                any_process_executed = true;
+                
+                if (processes[i].remaining_time > quantum) {
+                    current_time += quantum;
+                    processes[i].remaining_time -= quantum;
+                } else {
+                    current_time += processes[i].remaining_time;
+                    processes[i].waiting_time = current_time - processes[i].arrival_time - processes[i].burst_time;
+                    processes[i].turnaround_time = processes[i].waiting_time + processes[i].burst_time;
+                    processes[i].remaining_time = 0;
+                    processes[i].completed = true;
+                    completed++;
+                }
+            }
+        }
+
+        if (!any_process_executed) {
+            current_time++;
+        }
+    }
+}
+
+int main() {
+    struct Process processes[] = {
+        {1, 0, 5, 5, 0, 0, false},
+        {2, 1, 3, 3, 0, 0, false},
+        {3, 2, 8, 8, 0, 0, false}
+    };
+    int n = sizeof(processes) / sizeof(processes[0]);
+    int quantum = 2;
+
+    calculateRR(processes, n, quantum);
+
+    printf("Process\tWaiting Time\tTurnaround Time\n");
+    for (int i = 0; i < n; i++) {
+        printf("P%d\t%d\t\t%d\n", processes[i].pid, 
+               processes[i].waiting_time, processes[i].turnaround_time);
+    }
+
+    return 0;
+}</code></pre>
+                        <button class="clipboard-button" onclick="copyToClipboard(this)">Copy Code</button>
+                    </div>
+
+                    <div class="mt-4">
+                        <h3 class="font-bold text-lg mb-2">Expected Output</h3>
+                        <div class="bg-gray-800 text-gray-100 p-4 rounded-lg">
+                            <pre class="text-sm">Process Waiting Time    Turnaround Time
+P1      9               14
+P2      3               6
+P3      10              18
+
+Average Waiting Time: 7.33
+Average Turnaround Time: 12.67</pre>
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <h3 class="font-bold text-lg mb-2">Output Explanation</h3>
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <ul class="list-disc pl-6">
+                                <li>P1 starts first and gets 2 time units (quantum = 2)</li>
+                                <li>P2 arrives at time 1 and gets 2 time units</li>
+                                <li>P3 arrives at time 2 and gets 2 time units</li>
+                                <li>Processes continue in round-robin fashion until completion</li>
+                                <li>Total execution time: 18 time units</li>
+                                <li>Average waiting time is calculated as (9 + 3 + 10) / 3 = 7.33</li>
+                                <li>Average turnaround time is calculated as (14 + 6 + 18) / 3 = 12.67</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <h3 class="font-bold text-lg mb-2">Example Timeline (Time Quantum = 2)</h3>
+                        <div class="timeline">
+                            <div class="time-unit">0</div>
+                            <div class="process-box bg-blue-500 text-white">P1</div>
+                            <div class="time-unit">1</div>
+                            <div class="process-box bg-blue-500 text-white">P1</div>
+                            <div class="time-unit">2</div>
+                            <div class="process-box bg-green-500 text-white">P2</div>
+                            <div class="time-unit">3</div>
+                            <div class="process-box bg-green-500 text-white">P2</div>
+                            <div class="time-unit">4</div>
+                            <div class="process-box bg-red-500 text-white">P3</div>
+                            <div class="time-unit">5</div>
+                            <div class="process-box bg-red-500 text-white">P3</div>
+                            <div class="time-unit">6</div>
+                            <div class="process-box bg-blue-500 text-white">P1</div>
+                            <div class="time-unit">7</div>
+                            <div class="process-box bg-blue-500 text-white">P1</div>
+                            <div class="time-unit">8</div>
+                            <div class="process-box bg-red-500 text-white">P3</div>
+                            <div class="time-unit">9</div>
+                            <div class="process-box bg-red-500 text-white">P3</div>
+                            <div class="time-unit">10</div>
+                            <div class="process-box bg-blue-500 text-white">P1</div>
+                            <div class="time-unit">11</div>
+                            <div class="process-box bg-red-500 text-white">P3</div>
+                            <div class="time-unit">12</div>
+                            <div class="process-box bg-red-500 text-white">P3</div>
+                            <div class="time-unit">13</div>
+                            <div class="process-box bg-red-500 text-white">P3</div>
+                            <div class="time-unit">14</div>
+                            <div class="process-box bg-red-500 text-white">P3</div>
+                            <div class="time-unit">15</div>
+                        </div>
+                    </div>
+
+                    <div class="bg-yellow-50 p-4 rounded-lg mt-4 border-l-4 border-yellow-500">
+                        <h3 class="font-bold text-lg mb-2">Characteristics</h3>
+                        <ul class="list-disc pl-6">
+                            <li>Preemptive scheduling algorithm</li>
+                            <li>No process waits more than (n-1)q time units</li>
+                            <li>Performance depends on time quantum size</li>
+                            <li>Good for time-sharing systems</li>
+                        </ul>
+                    </div>
+                </section>
+
+                <section class="mb-8">
+                    <h2 class="text-xl md:text-2xl font-bold text-blue-700 mb-4">Summary</h2>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p>In this lab, we've learned about four important CPU scheduling algorithms:</p>
+                        <ul class="list-disc pl-6 mt-2">
+                            <li><strong>FCFS:</strong> Simple but may lead to convoy effect</li>
+                            <li><strong>SJF:</strong> Optimal for minimizing waiting time but requires knowledge of burst times</li>
+                            <li><strong>Priority:</strong> Useful for real-time systems but may cause starvation</li>
+                            <li><strong>Round Robin:</strong> Fair scheduling with time quantum</li>
+                        </ul>
+                        <p class="mt-4">Each algorithm has its own advantages and disadvantages, and the choice of algorithm depends on the specific requirements of the system.</p>
+                        
+                        <div class="mt-4">
+                            <h3 class="font-bold text-lg">Next Steps:</h3>
+                            <ul class="list-disc pl-6 mt-2">
+                                <li>Implement these algorithms with different process sets</li>
+                                <li>Compare their performance metrics</li>
+                                <li>Experiment with different time quantum values in RR</li>
+                                <li>Study more advanced scheduling algorithms</li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+            </main>
+
+            <footer class="text-center text-gray-500 text-sm mt-8">
+                <p>© 2025 CPU Scheduling Algorithms Lab Experiment</p>
+            </footer>
+        </div>
+    </div>
+
+    <script>
+        function copyToClipboard(button) {
+            const container = button.parentElement;
+            const codeBlock = container.querySelector('code');
+            const textToCopy = codeBlock.textContent;
+            
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                const originalText = button.textContent;
+                button.textContent = 'Code Copied!';
+                button.style.backgroundColor = '#10B981';
+                
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.style.backgroundColor = '#334155';
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+                button.textContent = 'Copy Failed!';
+                button.style.backgroundColor = '#EF4444';
+                
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.style.backgroundColor = '#334155';
+                }, 2000);
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            Prism.highlightAll();
+
+            // Sidebar toggle functionality
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.getElementById('mainContent');
+
+            sidebarToggle.addEventListener('click', (e) => {
+                e.stopPropagation();
+                sidebar.classList.toggle('active');
+                mainContent.classList.toggle('sidebar-active');
+            });
+
+            // Close sidebar when clicking outside on mobile
+            document.addEventListener('click', (e) => {
+                if (window.innerWidth <= 768) {
+                    if (!sidebar.contains(e.target) && !sidebarToggle.contains(e.target)) {
+                        sidebar.classList.remove('active');
+                        mainContent.classList.remove('sidebar-active');
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>

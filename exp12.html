@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Allocation Strategies</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.25.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.25.0/components/prism-c.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.25.0/themes/prism-tomorrow.min.css">
+    <style>
+        .clipboard-button {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+            background: #334155;
+            color: white;
+            border: none;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            opacity: 0.7;
+        }
+        .clipboard-button:hover {
+            opacity: 1;
+        }
+        .code-container {
+            position: relative;
+        }
+        .sidebar {
+            width: 250px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            background-color: #1e293b;
+            color: white;
+            padding: 1rem;
+            overflow-y: auto;
+            z-index: 1000;
+            transition: transform 0.3s ease;
+        }
+        .sidebar-toggle {
+            position: fixed;
+            top: 0;
+            left: 0;
+            padding: 1rem;
+            background-color: #1e293b;
+            color: white;
+            cursor: pointer;
+            z-index: 1001;
+            display: none;
+        }
+        .main-content {
+            margin-left: 250px;
+            transition: margin-left 0.3s ease;
+            padding: 1rem;
+        }
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            .sidebar.active {
+                transform: translateX(0);
+            }
+            .sidebar-toggle {
+                display: block;
+            }
+            .main-content {
+                margin-left: 0;
+                padding: 1rem;
+            }
+            .main-content.sidebar-active {
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
+    <div class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle Sidebar">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+    </div>
+
+    <div class="sidebar" id="sidebar">
+        <div class="flex items-center space-x-2 mb-6">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+            </svg>
+            <h2 class="text-xl font-bold text-white">Experiments</h2>
+        </div>
+        <ul class="space-y-2">
+            <li><a href="exp1.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 1: Basic UNIX Commands</a></li>
+            <li><a href="exp2.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 2: UNIX System Calls</a></li>
+            <li><a href="exp3.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 3: Advanced UNIX Commands</a></li>
+            <li><a href="exp4.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 4: CPU Scheduling</a></li>
+            <li><a href="exp5.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 5: Port Control</a></li>
+            <li><a href="exp6.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 6: Thread Basics</a></li>
+            <li><a href="exp7.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 7: Producer-Consumer</a></li>
+            <li><a href="exp8.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 8: Memory Allocation</a></li>
+            <li><a href="exp9.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 9: Page Replacement</a></li>
+            <li><a href="exp10.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 10: Paging Technique</a></li>
+            <li><a href="exp11.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 11: Banker's Algorithm</a></li>
+            <li><a href="exp12.html" class="block py-2 px-4 bg-blue-600 rounded transition duration-200">Experiment 12: File Allocation</a></li>
+        </ul>
+    </div>
+
+    <div class="main-content" id="mainContent">
+        <div class="container mx-auto px-4 py-8 max-w-4xl">
+            <header class="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-6 rounded-t-lg shadow-lg">
+                <div class="flex items-center space-x-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-blue-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+                    </svg>
+                    <div>
+                        <h1 class="text-2xl md:text-3xl font-bold">Lab Experiment: File Allocation Strategies</h1>
+                        <p class="text-blue-100 mt-1">Understanding Sequential, Indexed, and Linked Allocation</p>
+                    </div>
+                </div>
+            </header>
+
+            <main class="bg-white p-6 rounded-b-lg shadow-lg mb-8">
+                <section class="mb-8">
+                    <h2 class="text-xl md:text-2xl font-bold text-blue-700 mb-4">Aim</h2>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p>To implement and understand different file allocation strategies: Sequential, Indexed, and Linked allocation.</p>
+                    </div>
+                </section>
+
+                <section class="mb-8">
+                    <h2 class="text-xl md:text-2xl font-bold text-blue-700 mb-4">Theory</h2>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p class="mb-4">File allocation strategies determine how files are stored on disk:</p>
+                        
+                        <div class="mt-4">
+                            <h3 class="font-semibold text-lg">1. Sequential Allocation</h3>
+                            <ul class="list-disc pl-6 mt-2">
+                                <li>Files are stored in contiguous blocks</li>
+                                <li>Like a book where pages are in order</li>
+                                <li>Advantages:
+                                    <ul class="list-disc pl-6 mt-2">
+                                        <li>Simple to implement</li>
+                                        <li>Fast sequential access</li>
+                                        <li>Easy to calculate file location</li>
+                                    </ul>
+                                </li>
+                                <li>Disadvantages:
+                                    <ul class="list-disc pl-6 mt-2">
+                                        <li>External fragmentation</li>
+                                        <li>Difficult to grow files</li>
+                                        <li>Inefficient for random access</li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <div class="mt-4">
+                            <h3 class="font-semibold text-lg">2. Indexed Allocation</h3>
+                            <ul class="list-disc pl-6 mt-2">
+                                <li>Uses an index block to store pointers to file blocks</li>
+                                <li>Like a book's index that points to different pages</li>
+                                <li>Advantages:
+                                    <ul class="list-disc pl-6 mt-2">
+                                        <li>Supports random access</li>
+                                        <li>No external fragmentation</li>
+                                        <li>Easy to grow files</li>
+                                    </ul>
+                                </li>
+                                <li>Disadvantages:
+                                    <ul class="list-disc pl-6 mt-2">
+                                        <li>Overhead of index block</li>
+                                        <li>Limited file size by index block size</li>
+                                        <li>Extra disk access for index</li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <div class="mt-4">
+                            <h3 class="font-semibold text-lg">3. Linked Allocation</h3>
+                            <ul class="list-disc pl-6 mt-2">
+                                <li>Each block points to the next block</li>
+                                <li>Like a treasure hunt with clues</li>
+                                <li>Advantages:
+                                    <ul class="list-disc pl-6 mt-2">
+                                        <li>No external fragmentation</li>
+                                        <li>Easy to grow files</li>
+                                        <li>Efficient for sequential access</li>
+                                    </ul>
+                                </li>
+                                <li>Disadvantages:
+                                    <ul class="list-disc pl-6 mt-2">
+                                        <li>Inefficient for random access</li>
+                                        <li>Space overhead for pointers</li>
+                                        <li>Reliability issues if links break</li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="mb-10 border-b pb-6">
+                    <h2 class="text-xl md:text-2xl font-bold text-blue-700 mb-4">Implementation</h2>
+                    
+                    <div class="bg-gray-50 p-4 rounded-lg mb-4">
+                        <h3 class="font-bold text-lg mb-2">Description</h3>
+                        <p>This program demonstrates three file allocation strategies:</p>
+                        <ul class="list-disc pl-6 mt-2">
+                            <li>Sequential allocation with contiguous blocks</li>
+                            <li>Indexed allocation with index blocks</li>
+                            <li>Linked allocation with block pointers</li>
+                            <li>Clear visualization of each strategy</li>
+                        </ul>
+                    </div>
+
+                    <div class="code-container mt-4">
+                        <h3 class="font-bold text-lg mb-2">Program Code</h3>
+                        <pre class="language-c rounded-lg"><code>#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+
+#define BLOCK_SIZE 4
+#define NUM_BLOCKS 10
+
+// Structure for a disk block
+typedef struct {
+    int data[BLOCK_SIZE];
+    int next_block;  // For linked allocation
+} DiskBlock;
+
+// Structure for a file
+typedef struct {
+    int start_block;  // For sequential allocation
+    int size;        // Number of blocks
+    int* index_block; // For indexed allocation
+} File;
+
+// Function to print disk blocks
+void print_blocks(DiskBlock* disk, int num_blocks) {
+    printf("\nDisk Blocks:\n");
+    printf("Block\tData\tNext\n");
+    printf("-----------------\n");
+    for (int i = 0; i < num_blocks; i++) {
+        printf("%d\t", i);
+        for (int j = 0; j < BLOCK_SIZE; j++) {
+            printf("%d ", disk[i].data[j]);
+        }
+        printf("\t%d\n", disk[i].next_block);
+    }
+}
+
+// Sequential Allocation
+void sequential_allocation(DiskBlock* disk, File* file, int size) {
+    printf("\nSequential Allocation:\n");
+    printf("----------------------\n");
+    
+    // Find contiguous free blocks
+    int start = -1;
+    int count = 0;
+    for (int i = 0; i < NUM_BLOCKS; i++) {
+        if (disk[i].data[0] == 0) {  // Block is free
+            if (count == 0) start = i;
+            count++;
+            if (count == size) break;
+        } else {
+            count = 0;
+            start = -1;
+        }
+    }
+    
+    if (start != -1) {
+        file->start_block = start;
+        file->size = size;
+        printf("File allocated from block %d to %d\n", start, start + size - 1);
+        
+        // Fill blocks with data
+        for (int i = 0; i < size; i++) {
+            for (int j = 0; j < BLOCK_SIZE; j++) {
+                disk[start + i].data[j] = (start + i) * BLOCK_SIZE + j + 1;
+            }
+        }
+    } else {
+        printf("Error: Not enough contiguous space\n");
+    }
+}
+
+// Indexed Allocation
+void indexed_allocation(DiskBlock* disk, File* file, int size) {
+    printf("\nIndexed Allocation:\n");
+    printf("-------------------\n");
+    
+    // Find free blocks for file and index
+    int* free_blocks = (int*)malloc(size * sizeof(int));
+    int index_block = -1;
+    int count = 0;
+    
+    for (int i = 0; i < NUM_BLOCKS; i++) {
+        if (disk[i].data[0] == 0) {  // Block is free
+            if (count == 0) index_block = i;
+            free_blocks[count] = i;
+            count++;
+            if (count == size + 1) break;  // +1 for index block
+        }
+    }
+    
+    if (count == size + 1) {
+        file->index_block = (int*)malloc(size * sizeof(int));
+        file->size = size;
+        
+        // Store block pointers in index block
+        for (int i = 0; i < size; i++) {
+            file->index_block[i] = free_blocks[i + 1];
+            disk[index_block].data[i] = free_blocks[i + 1];
+        }
+        
+        printf("Index block: %d\n", index_block);
+        printf("Data blocks: ");
+        for (int i = 0; i < size; i++) {
+            printf("%d ", free_blocks[i + 1]);
+        }
+        printf("\n");
+        
+        // Fill data blocks
+        for (int i = 0; i < size; i++) {
+            for (int j = 0; j < BLOCK_SIZE; j++) {
+                disk[free_blocks[i + 1]].data[j] = (i + 1) * BLOCK_SIZE + j + 1;
+            }
+        }
+    } else {
+        printf("Error: Not enough free blocks\n");
+    }
+    
+    free(free_blocks);
+}
+
+// Linked Allocation
+void linked_allocation(DiskBlock* disk, File* file, int size) {
+    printf("\nLinked Allocation:\n");
+    printf("------------------\n");
+    
+    // Find free blocks
+    int* free_blocks = (int*)malloc(size * sizeof(int));
+    int count = 0;
+    
+    for (int i = 0; i < NUM_BLOCKS; i++) {
+        if (disk[i].data[0] == 0) {  // Block is free
+            free_blocks[count] = i;
+            count++;
+            if (count == size) break;
+        }
+    }
+    
+    if (count == size) {
+        file->start_block = free_blocks[0];
+        file->size = size;
+        
+        // Link blocks together
+        for (int i = 0; i < size - 1; i++) {
+            disk[free_blocks[i]].next_block = free_blocks[i + 1];
+            for (int j = 0; j < BLOCK_SIZE; j++) {
+                disk[free_blocks[i]].data[j] = (i + 1) * BLOCK_SIZE + j + 1;
+            }
+        }
+        disk[free_blocks[size - 1]].next_block = -1;  // End of file
+        
+        printf("File starts at block %d\n", free_blocks[0]);
+        printf("Block chain: ");
+        for (int i = 0; i < size; i++) {
+            printf("%d -> ", free_blocks[i]);
+        }
+        printf("END\n");
+    } else {
+        printf("Error: Not enough free blocks\n");
+    }
+    
+    free(free_blocks);
+}
+
+int main() {
+    // Initialize disk blocks
+    DiskBlock disk[NUM_BLOCKS];
+    for (int i = 0; i < NUM_BLOCKS; i++) {
+        for (int j = 0; j < BLOCK_SIZE; j++) {
+            disk[i].data[j] = 0;  // 0 means block is free
+        }
+        disk[i].next_block = -1;
+    }
+    
+    printf("File Allocation Strategies\n");
+    printf("=========================\n");
+    
+    // Test sequential allocation
+    File seq_file;
+    sequential_allocation(disk, &seq_file, 3);
+    print_blocks(disk, NUM_BLOCKS);
+    
+    // Reset disk
+    for (int i = 0; i < NUM_BLOCKS; i++) {
+        for (int j = 0; j < BLOCK_SIZE; j++) {
+            disk[i].data[j] = 0;
+        }
+        disk[i].next_block = -1;
+    }
+    
+    // Test indexed allocation
+    File idx_file;
+    indexed_allocation(disk, &idx_file, 3);
+    print_blocks(disk, NUM_BLOCKS);
+    
+    // Reset disk
+    for (int i = 0; i < NUM_BLOCKS; i++) {
+        for (int j = 0; j < BLOCK_SIZE; j++) {
+            disk[i].data[j] = 0;
+        }
+        disk[i].next_block = -1;
+    }
+    
+    // Test linked allocation
+    File link_file;
+    linked_allocation(disk, &link_file, 3);
+    print_blocks(disk, NUM_BLOCKS);
+    
+    return 0;
+}</code></pre>
+                        <button class="clipboard-button" onclick="copyToClipboard(this)">Copy Code</button>
+                    </div>
+
+                    <div class="mt-4">
+                        <h3 class="font-bold text-lg mb-2">Expected Output</h3>
+                        <div class="bg-gray-800 text-gray-100 p-4 rounded-lg">
+                            <pre class="text-sm">File Allocation Strategies
+=========================
+
+Sequential Allocation:
+----------------------
+File allocated from block 0 to 2
+
+Disk Blocks:
+Block   Data    Next
+-----------------
+0       1 2 3 4 -1
+1       5 6 7 8 -1
+2       9 10 11 12 -1
+3       0 0 0 0 -1
+4       0 0 0 0 -1
+5       0 0 0 0 -1
+6       0 0 0 0 -1
+7       0 0 0 0 -1
+8       0 0 0 0 -1
+9       0 0 0 0 -1
+
+Indexed Allocation:
+-------------------
+Index block: 0
+Data blocks: 1 2 3
+
+Disk Blocks:
+Block   Data    Next
+-----------------
+0       1 2 3 0 -1
+1       5 6 7 8 -1
+2       9 10 11 12 -1
+3       13 14 15 16 -1
+4       0 0 0 0 -1
+5       0 0 0 0 -1
+6       0 0 0 0 -1
+7       0 0 0 0 -1
+8       0 0 0 0 -1
+9       0 0 0 0 -1
+
+Linked Allocation:
+------------------
+File starts at block 0
+Block chain: 0 -> 1 -> 2 -> END
+
+Disk Blocks:
+Block   Data    Next
+-----------------
+0       5 6 7 8 1
+1       9 10 11 12 2
+2       13 14 15 16 -1
+3       0 0 0 0 -1
+4       0 0 0 0 -1
+5       0 0 0 0 -1
+6       0 0 0 0 -1
+7       0 0 0 0 -1
+8       0 0 0 0 -1
+9       0 0 0 0 -1</pre>
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <h3 class="font-bold text-lg mb-2">Output Explanation</h3>
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <ul class="list-disc pl-6">
+                                <li>Sequential Allocation:
+                                    <ul class="list-disc pl-6 mt-2">
+                                        <li>File uses blocks 0, 1, and 2</li>
+                                        <li>Blocks are filled with sequential data</li>
+                                        <li>No next block pointers needed</li>
+                                    </ul>
+                                </li>
+                                <li>Indexed Allocation:
+                                    <ul class="list-disc pl-6 mt-2">
+                                        <li>Block 0 is the index block</li>
+                                        <li>Contains pointers to data blocks 1, 2, and 3</li>
+                                        <li>Data blocks contain actual file data</li>
+                                    </ul>
+                                </li>
+                                <li>Linked Allocation:
+                                    <ul class="list-disc pl-6 mt-2">
+                                        <li>Blocks 0, 1, and 2 are linked together</li>
+                                        <li>Each block points to the next block</li>
+                                        <li>Last block points to -1 (end of file)</li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="mb-8">
+                    <h2 class="text-xl md:text-2xl font-bold text-blue-700 mb-4">Summary</h2>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p>In this lab, we've learned about three file allocation strategies:</p>
+                        <ul class="list-disc pl-6 mt-2">
+                            <li><strong>Sequential Allocation:</strong> Contiguous blocks, simple but inflexible</li>
+                            <li><strong>Indexed Allocation:</strong> Uses index blocks for random access</li>
+                            <li><strong>Linked Allocation:</strong> Blocks linked by pointers, flexible but slower</li>
+                        </ul>
+                        
+                        <div class="mt-4">
+                            <h3 class="font-bold text-lg">Key Points to Remember:</h3>
+                            <ul class="list-disc pl-6 mt-2">
+                                <li>Each strategy has different trade-offs</li>
+                                <li>Choice depends on file access patterns</li>
+                                <li>Consider fragmentation and access speed</li>
+                                <li>Modern systems often use combinations</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="mt-4">
+                            <h3 class="font-bold text-lg">Next Steps:</h3>
+                            <ul class="list-disc pl-6 mt-2">
+                                <li>Implement file system with multiple strategies</li>
+                                <li>Add support for file operations</li>
+                                <li>Study modern file systems</li>
+                                <li>Explore hybrid allocation methods</li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+            </main>
+
+            <footer class="text-center text-gray-500 text-sm mt-8">
+                <p>© 2025 File Allocation Strategies Lab Experiment</p>
+            </footer>
+        </div>
+    </div>
+
+    <script>
+        function copyToClipboard(button) {
+            const container = button.parentElement;
+            const codeBlock = container.querySelector('code');
+            const textToCopy = codeBlock.textContent;
+            
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                const originalText = button.textContent;
+                button.textContent = 'Code Copied!';
+                button.style.backgroundColor = '#10B981';
+                
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.style.backgroundColor = '#334155';
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+                button.textContent = 'Copy Failed!';
+                button.style.backgroundColor = '#EF4444';
+                
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.style.backgroundColor = '#334155';
+                }, 2000);
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            Prism.highlightAll();
+
+            // Sidebar toggle functionality
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.getElementById('mainContent');
+
+            sidebarToggle.addEventListener('click', (e) => {
+                e.stopPropagation();
+                sidebar.classList.toggle('active');
+                mainContent.classList.toggle('sidebar-active');
+            });
+
+            // Close sidebar when clicking outside on mobile
+            document.addEventListener('click', (e) => {
+                if (window.innerWidth <= 768) {
+                    if (!sidebar.contains(e.target) && !sidebarToggle.contains(e.target)) {
+                        sidebar.classList.remove('active');
+                        mainContent.classList.remove('sidebar-active');
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>

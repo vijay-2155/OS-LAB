@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Port Control with Semaphores and Monitors</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.25.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.25.0/components/prism-c.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.25.0/themes/prism-tomorrow.min.css">
+    <style>
+        .clipboard-button {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+            background: #334155;
+            color: white;
+            border: none;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            opacity: 0.7;
+        }
+        .clipboard-button:hover {
+            opacity: 1;
+        }
+        .code-container {
+            position: relative;
+        }
+        .sidebar {
+            width: 250px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            background-color: #1e293b;
+            color: white;
+            padding: 1rem;
+            overflow-y: auto;
+            z-index: 1000;
+            transition: transform 0.3s ease;
+        }
+        .sidebar-toggle {
+            position: fixed;
+            top: 0;
+            left: 0;
+            padding: 1rem;
+            background-color: #1e293b;
+            color: white;
+            cursor: pointer;
+            z-index: 1001;
+            display: none;
+        }
+        .main-content {
+            margin-left: 250px;
+            transition: margin-left 0.3s ease;
+            padding: 1rem;
+        }
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            .sidebar.active {
+                transform: translateX(0);
+            }
+            .sidebar-toggle {
+                display: block;
+            }
+            .main-content {
+                margin-left: 0;
+                padding: 1rem;
+            }
+            .main-content.sidebar-active {
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
+    <div class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle Sidebar">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+    </div>
+
+    <div class="sidebar" id="sidebar">
+        <div class="flex items-center space-x-2 mb-6">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+            </svg>
+            <h2 class="text-xl font-bold text-white">Experiments</h2>
+        </div>
+        <ul class="space-y-2">
+            <li><a href="exp1.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 1: Basic UNIX Commands</a></li>
+            <li><a href="exp2.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 2: UNIX System Calls</a></li>
+            <li><a href="exp3.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 3: Advanced UNIX Commands</a></li>
+            <li><a href="exp4.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 4: CPU Scheduling</a></li>
+            <li><a href="exp5.html" class="block py-2 px-4 bg-blue-600 rounded transition duration-200">Experiment 5: Port Control</a></li>
+            <li><a href="exp6.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 6: Thread Basics</a></li>
+            <li><a href="exp7.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 7: Producer-Consumer</a></li>
+            <li><a href="exp8.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 8: Memory Allocation</a></li>
+            <li><a href="exp9.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 9: Page Replacement</a></li>
+            <li><a href="exp10.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 10: Paging Technique</a></li>
+            <li><a href="exp11.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 11: Banker's Algorithm</a></li>
+            <li><a href="exp12.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 12: File Allocation</a></li>
+        </ul>
+    </div>
+
+    <div class="main-content" id="mainContent">
+        <div class="container mx-auto px-4 py-8 max-w-4xl">
+            <header class="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-6 rounded-t-lg shadow-lg">
+                <div class="flex items-center space-x-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-blue-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+                    </svg>
+                    <div>
+                        <h1 class="text-2xl md:text-3xl font-bold">Lab Experiment: Port Control with Semaphores and Monitors</h1>
+                        <p class="text-blue-100 mt-1">Implementation of port control mechanisms using synchronization primitives</p>
+                    </div>
+                </div>
+            </header>
+
+            <main class="bg-white p-6 rounded-b-lg shadow-lg mb-8">
+                <section class="mb-8">
+                    <h2 class="text-xl md:text-2xl font-bold text-blue-700 mb-4">Aim</h2>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p>To implement and understand the control of system ports using semaphores and monitors as synchronization mechanisms.</p>
+                    </div>
+                </section>
+
+                <section class="mb-8">
+                    <h2 class="text-xl md:text-2xl font-bold text-blue-700 mb-4">Theory</h2>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p class="mb-4">Port control is essential in operating systems to manage concurrent access to system resources. Two common synchronization mechanisms used for this purpose are:</p>
+                        
+                        <div class="mt-4">
+                            <h3 class="font-semibold text-lg">1. Semaphores</h3>
+                            <ul class="list-disc pl-6 mt-2">
+                                <li>Integer variables used for process synchronization</li>
+                                <li>Two atomic operations: wait() and signal()</li>
+                                <li>Can be used to control access to a limited number of resources</li>
+                                <li>Binary semaphores (mutex) and counting semaphores</li>
+                            </ul>
+                        </div>
+
+                        <div class="mt-4">
+                            <h3 class="font-semibold text-lg">2. Monitors</h3>
+                            <ul class="list-disc pl-6 mt-2">
+                                <li>High-level synchronization construct</li>
+                                <li>Encapsulates shared data and operations</li>
+                                <li>Provides mutual exclusion automatically</li>
+                                <li>Uses condition variables for process synchronization</li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Semaphore Implementation -->
+                <section class="mb-10 border-b pb-6">
+                    <h2 class="text-xl md:text-2xl font-bold text-blue-700 mb-4">1. Port Control using Semaphores</h2>
+                    
+                    <div class="bg-gray-50 p-4 rounded-lg mb-4">
+                        <h3 class="font-bold text-lg mb-2">Description</h3>
+                        <p>This implementation uses a simple counting semaphore to control access to ports. Think of it like a ticket counter at a movie theater - only a limited number of people (threads) can enter at a time.</p>
+                    </div>
+
+                    <div class="code-container mt-4">
+                        <h3 class="font-bold text-lg mb-2">Implementation</h3>
+                        <pre class="language-c rounded-lg"><code>#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;pthread.h&gt;
+#include &lt;semaphore.h&gt;
+
+// Define constants
+#define MAX_PORTS 3    // Maximum number of ports available
+#define NUM_THREADS 5  // Number of threads trying to use ports
+
+// Global variables
+sem_t port_semaphore;  // Our semaphore to control port access
+int available_ports = MAX_PORTS;  // Track available ports
+
+// Function for threads to use a port
+void* use_port(void* thread_id) {
+    int tid = *(int*)thread_id;
+    
+    printf("Thread %d: I want to use a port...\n", tid);
+    
+    // Wait for a port to become available
+    // This is like waiting in line for a ticket
+    sem_wait(&port_semaphore);
+    
+    // We got a port! Update the count
+    available_ports--;
+    printf("Thread %d: Got a port! Ports left: %d\n", 
+           tid, available_ports);
+    
+    // Simulate using the port (like watching a movie)
+    printf("Thread %d: Using the port...\n", tid);
+    sleep(1);  // Simulate work
+    
+    // Done using the port, release it
+    sem_post(&port_semaphore);
+    available_ports++;
+    printf("Thread %d: Done! Released port. Ports available: %d\n", 
+           tid, available_ports);
+    
+    return NULL;
+}
+
+int main() {
+    pthread_t threads[NUM_THREADS];
+    int thread_ids[NUM_THREADS];
+    
+    // Initialize semaphore with MAX_PORTS
+    // This is like having MAX_PORTS tickets available
+    sem_init(&port_semaphore, 0, MAX_PORTS);
+    
+    // Create threads (like people arriving at the theater)
+    for (int i = 0; i < NUM_THREADS; i++) {
+        thread_ids[i] = i;
+        pthread_create(&threads[i], NULL, use_port, &thread_ids[i]);
+    }
+    
+    // Wait for all threads to finish
+    for (int i = 0; i < NUM_THREADS; i++) {
+        pthread_join(threads[i], NULL);
+    }
+    
+    // Clean up
+    sem_destroy(&port_semaphore);
+    
+    return 0;
+}</code></pre>
+                        <button class="clipboard-button" onclick="copyToClipboard(this)">Copy Code</button>
+                    </div>
+
+                    <div class="mt-4">
+                        <h3 class="font-bold text-lg mb-2">Expected Output</h3>
+                        <div class="bg-gray-800 text-gray-100 p-4 rounded-lg">
+                            <pre class="text-sm">Thread 0: I want to use a port...
+Thread 0: Got a port! Ports left: 2
+Thread 0: Using the port...
+Thread 1: I want to use a port...
+Thread 1: Got a port! Ports left: 1
+Thread 1: Using the port...
+Thread 2: I want to use a port...
+Thread 2: Got a port! Ports left: 0
+Thread 2: Using the port...
+Thread 3: I want to use a port...
+Thread 4: I want to use a port...
+Thread 0: Done! Released port. Ports available: 1
+Thread 3: Got a port! Ports left: 0
+Thread 3: Using the port...
+Thread 1: Done! Released port. Ports available: 1
+Thread 4: Got a port! Ports left: 0
+Thread 4: Using the port...
+Thread 2: Done! Released port. Ports available: 1
+Thread 3: Done! Released port. Ports available: 2
+Thread 4: Done! Released port. Ports available: 3</pre>
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <h3 class="font-bold text-lg mb-2">Output Explanation</h3>
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <ul class="list-disc pl-6">
+                                <li>We start with 3 ports available</li>
+                                <li>First 3 threads get ports immediately</li>
+                                <li>Threads 3 and 4 have to wait (like people in a waiting room)</li>
+                                <li>As threads finish using ports, waiting threads get their turn</li>
+                                <li>Finally, all ports are released and available again</li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Monitor Implementation -->
+                <section class="mb-10 border-b pb-6">
+                    <h2 class="text-xl md:text-2xl font-bold text-blue-700 mb-4">2. Port Control using Monitors</h2>
+                    
+                    <div class="bg-gray-50 p-4 rounded-lg mb-4">
+                        <h3 class="font-bold text-lg mb-2">Description</h3>
+                        <p>This implementation uses a monitor, which is like a special room with a security guard. The guard makes sure only one person can use the ports at a time, and manages a waiting list for others.</p>
+                    </div>
+
+                    <div class="code-container mt-4">
+                        <h3 class="font-bold text-lg mb-2">Implementation</h3>
+                        <pre class="language-c rounded-lg"><code>#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;pthread.h&gt;
+
+// Define constants
+#define MAX_PORTS 3    // Maximum number of ports available
+#define NUM_THREADS 5  // Number of threads trying to use ports
+
+// Our monitor structure (like a security guard's booth)
+typedef struct {
+    pthread_mutex_t lock;      // The guard's lock
+    pthread_cond_t signal;     // The guard's signal system
+    int available_ports;       // Number of ports available
+} PortMonitor;
+
+// Initialize our monitor
+PortMonitor monitor = {
+    .lock = PTHREAD_MUTEX_INITIALIZER,
+    .signal = PTHREAD_COND_INITIALIZER,
+    .available_ports = MAX_PORTS
+};
+
+// Function to get a port (like getting permission from the guard)
+void get_port(int thread_id) {
+    // Ask the guard for permission to enter
+    pthread_mutex_lock(&monitor.lock);
+    
+    // If no ports available, wait in line
+    while (monitor.available_ports == 0) {
+        printf("Thread %d: No ports available, waiting...\n", thread_id);
+        pthread_cond_wait(&monitor.signal, &monitor.lock);
+    }
+    
+    // Got a port! Update the count
+    monitor.available_ports--;
+    printf("Thread %d: Got a port! Ports left: %d\n", 
+           thread_id, monitor.available_ports);
+    
+    // Leave the guard's booth
+    pthread_mutex_unlock(&monitor.lock);
+}
+
+// Function to return a port (like telling the guard you're done)
+void return_port(int thread_id) {
+    // Go back to the guard
+    pthread_mutex_lock(&monitor.lock);
+    
+    // Return the port
+    monitor.available_ports++;
+    printf("Thread %d: Done! Returned port. Ports available: %d\n", 
+           thread_id, monitor.available_ports);
+    
+    // Signal the next person in line
+    pthread_cond_signal(&monitor.signal);
+    
+    // Leave the guard's booth
+    pthread_mutex_unlock(&monitor.lock);
+}
+
+// Function for threads to use a port
+void* use_port(void* thread_id) {
+    int tid = *(int*)thread_id;
+    
+    printf("Thread %d: I want to use a port...\n", tid);
+    get_port(tid);
+    
+    // Simulate using the port
+    printf("Thread %d: Using the port...\n", tid);
+    sleep(1);
+    
+    return_port(tid);
+    return NULL;
+}
+
+int main() {
+    pthread_t threads[NUM_THREADS];
+    int thread_ids[NUM_THREADS];
+    
+    // Create threads (like people arriving)
+    for (int i = 0; i < NUM_THREADS; i++) {
+        thread_ids[i] = i;
+        pthread_create(&threads[i], NULL, use_port, &thread_ids[i]);
+    }
+    
+    // Wait for all threads to finish
+    for (int i = 0; i < NUM_THREADS; i++) {
+        pthread_join(threads[i], NULL);
+    }
+    
+    return 0;
+}</code></pre>
+                        <button class="clipboard-button" onclick="copyToClipboard(this)">Copy Code</button>
+                    </div>
+
+                    <div class="mt-4">
+                        <h3 class="font-bold text-lg mb-2">Expected Output</h3>
+                        <div class="bg-gray-800 text-gray-100 p-4 rounded-lg">
+                            <pre class="text-sm">Thread 0: I want to use a port...
+Thread 0: Got a port! Ports left: 2
+Thread 0: Using the port...
+Thread 1: I want to use a port...
+Thread 1: Got a port! Ports left: 1
+Thread 1: Using the port...
+Thread 2: I want to use a port...
+Thread 2: Got a port! Ports left: 0
+Thread 2: Using the port...
+Thread 3: I want to use a port...
+Thread 3: No ports available, waiting...
+Thread 4: I want to use a port...
+Thread 4: No ports available, waiting...
+Thread 0: Done! Returned port. Ports available: 1
+Thread 3: Got a port! Ports left: 0
+Thread 3: Using the port...
+Thread 1: Done! Returned port. Ports available: 1
+Thread 4: Got a port! Ports left: 0
+Thread 4: Using the port...
+Thread 2: Done! Returned port. Ports available: 1
+Thread 3: Done! Returned port. Ports available: 2
+Thread 4: Done! Returned port. Ports available: 3</pre>
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <h3 class="font-bold text-lg mb-2">Output Explanation</h3>
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <ul class="list-disc pl-6">
+                                <li>We start with 3 ports available</li>
+                                <li>First 3 threads get ports immediately</li>
+                                <li>Threads 3 and 4 have to wait (like people in a waiting room)</li>
+                                <li>The monitor (guard) keeps track of who's waiting and signals them when a port is available</li>
+                                <li>As threads finish, the monitor lets waiting threads use the ports</li>
+                                <li>Finally, all ports are returned and available again</li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="mb-8">
+                    <h2 class="text-xl md:text-2xl font-bold text-blue-700 mb-4">Comparison</h2>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-100">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Feature</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Semaphore</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Monitor</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap">Implementation Complexity</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">Lower</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">Higher</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap">Synchronization</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">Manual</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">Automatic</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap">Error Prone</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">More</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">Less</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap">Flexibility</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">Higher</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">Lower</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section class="mb-8">
+                    <h2 class="text-xl md:text-2xl font-bold text-blue-700 mb-4">Summary</h2>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p>In this lab, we've implemented two different approaches to control port access:</p>
+                        <ul class="list-disc pl-6 mt-2">
+                            <li><strong>Semaphore-based:</strong> Uses counting semaphore to track available ports</li>
+                            <li><strong>Monitor-based:</strong> Encapsulates port management in a monitor with condition variables</li>
+                        </ul>
+                        <p class="mt-4">Both implementations ensure that:</p>
+                        <ul class="list-disc pl-6 mt-2">
+                            <li>No more than MAX_PORTS are in use simultaneously</li>
+                            <li>Threads wait properly when no ports are available</li>
+                            <li>Ports are properly released when no longer needed</li>
+                            <li>Race conditions are prevented</li>
+                        </ul>
+                        
+                        <div class="mt-4">
+                            <h3 class="font-bold text-lg">Next Steps:</h3>
+                            <ul class="list-disc pl-6 mt-2">
+                                <li>Implement priority-based port allocation</li>
+                                <li>Add timeout mechanism for port requests</li>
+                                <li>Implement port reservation system</li>
+                                <li>Study more advanced synchronization mechanisms</li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+            </main>
+
+            <footer class="text-center text-gray-500 text-sm mt-8">
+                <p>© 2025 Port Control Lab Experiment</p>
+            </footer>
+        </div>
+    </div>
+
+    <script>
+        function copyToClipboard(button) {
+            const container = button.parentElement;
+            const codeBlock = container.querySelector('code');
+            const textToCopy = codeBlock.textContent;
+            
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                const originalText = button.textContent;
+                button.textContent = 'Code Copied!';
+                button.style.backgroundColor = '#10B981';
+                
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.style.backgroundColor = '#334155';
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+                button.textContent = 'Copy Failed!';
+                button.style.backgroundColor = '#EF4444';
+                
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.style.backgroundColor = '#334155';
+                }, 2000);
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            Prism.highlightAll();
+
+            // Sidebar toggle functionality
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.getElementById('mainContent');
+
+            sidebarToggle.addEventListener('click', (e) => {
+                e.stopPropagation();
+                sidebar.classList.toggle('active');
+                mainContent.classList.toggle('sidebar-active');
+            });
+
+            // Close sidebar when clicking outside on mobile
+            document.addEventListener('click', (e) => {
+                if (window.innerWidth <= 768) {
+                    if (!sidebar.contains(e.target) && !sidebarToggle.contains(e.target)) {
+                        sidebar.classList.remove('active');
+                        mainContent.classList.remove('sidebar-active');
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>

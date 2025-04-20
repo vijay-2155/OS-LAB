@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Basic UNIX Commands</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.25.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.25.0/components/prism-bash.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.25.0/themes/prism-tomorrow.min.css">
+    <style>
+        .clipboard-button {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+            background: #334155;
+            color: white;
+            border: none;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            opacity: 0.7;
+        }
+        .clipboard-button:hover {
+            opacity: 1;
+        }
+        .code-container {
+            position: relative;
+        }
+        .sidebar {
+            width: 250px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            background-color: #1e293b;
+            color: white;
+            padding: 1rem;
+            overflow-y: auto;
+            z-index: 1000;
+            transition: transform 0.3s ease;
+        }
+        .sidebar-toggle {
+            position: fixed;
+            top: 0;
+            left: 0;
+            padding: 1rem;
+            background-color: #1e293b;
+            color: white;
+            cursor: pointer;
+            z-index: 1001;
+            display: none;
+        }
+        .main-content {
+            margin-left: 250px;
+            transition: margin-left 0.3s ease;
+            padding: 1rem;
+        }
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            .sidebar.active {
+                transform: translateX(0);
+            }
+            .sidebar-toggle {
+                display: block;
+            }
+            .main-content {
+                margin-left: 0;
+                padding: 1rem;
+            }
+            .main-content.sidebar-active {
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
+    <div class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle Sidebar">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+    </div>
+
+    <div class="sidebar" id="sidebar">
+        <div class="flex items-center space-x-2 mb-6">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+            </svg>
+            <h2 class="text-xl font-bold text-white">Experiments</h2>
+        </div>
+        <ul class="space-y-2">
+            <li><a href="exp1.html" class="block py-2 px-4 bg-blue-600 rounded transition duration-200">Experiment 1: Basic UNIX Commands</a></li>
+            <li><a href="exp2.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 2: UNIX System Calls</a></li>
+            <li><a href="exp3.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 3: Advanced UNIX Commands</a></li>
+            <li><a href="exp4.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 4: CPU Scheduling</a></li>
+            <li><a href="exp5.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 5: Port Control</a></li>
+            <li><a href="exp6.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 6: Thread Basics</a></li>
+            <li><a href="exp7.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 7: Producer-Consumer</a></li>
+            <li><a href="exp8.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 8: Memory Allocation</a></li>
+            <li><a href="exp9.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 9: Page Replacement</a></li>
+            <li><a href="exp10.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 10: Paging Technique</a></li>
+            <li><a href="exp11.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 11: Banker's Algorithm</a></li>
+            <li><a href="exp12.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 12: File Allocation</a></li>
+        </ul>
+    </div>
+
+    <div class="main-content" id="mainContent">
+        <div class="container mx-auto px-4 py-8 max-w-4xl">
+            <header class="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-6 rounded-t-lg shadow-lg">
+                <div class="flex items-center space-x-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-blue-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+                    </svg>
+                    <div>
+                        <h1 class="text-2xl md:text-3xl font-bold">Lab Experiment: Basic UNIX Commands</h1>
+                        <p class="text-blue-100 mt-1">Learning Essential Command Line Operations</p>
+                    </div>
+                </div>
+            </header>
+
+            <main class="bg-white p-6 rounded-b-lg shadow-lg mb-8">
+                <section class="mb-8">
+                    <h2 class="text-xl md:text-2xl font-bold text-blue-700 mb-4">Aim</h2>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p>To learn and practice basic UNIX commands for file and directory operations, text manipulation, and system information.</p>
+                    </div>
+                </section>
+
+                <section class="mb-8">
+                    <h2 class="text-xl md:text-2xl font-bold text-blue-700 mb-4">Getting Started</h2>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p class="mb-4">Before we begin, let's understand some basic concepts:</p>
+                        <ul class="list-disc pl-6 space-y-2">
+                            <li><strong>Terminal:</strong> A text-based interface to interact with your computer</li>
+                            <li><strong>Command:</strong> An instruction you give to the computer</li>
+                            <li><strong>Directory:</strong> A folder that contains files and other directories</li>
+                            <li><strong>Path:</strong> The location of a file or directory in the system</li>
+                        </ul>
+                    </div>
+                </section>
+
+                <section class="mb-8">
+                    <h2 class="text-xl md:text-2xl font-bold text-blue-700 mb-4">Basic Commands</h2>
+                    
+                    <div class="space-y-6">
+                        <!-- Navigation Commands -->
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <h3 class="font-bold text-lg mb-2">1. Navigation Commands</h3>
+                            <p class="mb-4">These commands help you move around the file system:</p>
+                            
+                            <div class="code-container">
+                                <pre class="language-bash rounded-lg"><code># See where you are
+pwd
+
+# List files and directories
+ls
+
+# Change directory
+cd directory_name
+
+# Go to home directory
+cd ~
+
+# Go up one directory
+cd ..</code></pre>
+                                <button class="clipboard-button" onclick="copyToClipboard(this)">Copy Code</button>
+                            </div>
+
+                            <div class="mt-4">
+                                <h4 class="font-semibold mb-2">Example Output:</h4>
+                                <div class="bg-gray-800 text-gray-100 p-4 rounded-lg">
+                                    <pre class="text-sm">$ pwd
+/home/student
+
+$ ls
+Documents  Downloads  Pictures  Music
+
+$ cd Documents
+$ pwd
+/home/student/Documents</pre>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- File Operations -->
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <h3 class="font-bold text-lg mb-2">2. File Operations</h3>
+                            <p class="mb-4">Commands to create, view, and manage files:</p>
+                            
+                            <div class="code-container">
+                                <pre class="language-bash rounded-lg"><code># Create a new file
+touch filename.txt
+
+# View file contents
+cat filename.txt
+
+# Copy a file
+cp source.txt destination.txt
+
+# Move or rename a file
+mv oldname.txt newname.txt
+
+# Delete a file
+rm filename.txt</code></pre>
+                                <button class="clipboard-button" onclick="copyToClipboard(this)">Copy Code</button>
+                            </div>
+
+                            <div class="mt-4">
+                                <h4 class="font-semibold mb-2">Example Output:</h4>
+                                <div class="bg-gray-800 text-gray-100 p-4 rounded-lg">
+                                    <pre class="text-sm">$ touch hello.txt
+$ cat hello.txt
+Hello, World!
+
+$ cp hello.txt backup.txt
+$ ls
+hello.txt  backup.txt
+
+$ mv hello.txt greeting.txt
+$ ls
+greeting.txt  backup.txt</pre>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Directory Operations -->
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <h3 class="font-bold text-lg mb-2">3. Directory Operations</h3>
+                            <p class="mb-4">Commands to create and manage directories:</p>
+                            
+                            <div class="code-container">
+                                <pre class="language-bash rounded-lg"><code># Create a new directory
+mkdir directory_name
+
+# Remove an empty directory
+rmdir directory_name
+
+# Remove directory and its contents
+rm -r directory_name
+
+# List files with details
+ls -l
+
+# List all files including hidden ones
+ls -a</code></pre>
+                                <button class="clipboard-button" onclick="copyToClipboard(this)">Copy Code</button>
+                            </div>
+
+                            <div class="mt-4">
+                                <h4 class="font-semibold mb-2">Example Output:</h4>
+                                <div class="bg-gray-800 text-gray-100 p-4 rounded-lg">
+                                    <pre class="text-sm">$ mkdir my_folder
+$ ls
+my_folder
+
+$ touch my_folder/file.txt
+$ ls -l my_folder
+total 0
+-rw-r--r-- 1 user user 0 Jan 1 12:00 file.txt</pre>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Text Manipulation -->
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <h3 class="font-bold text-lg mb-2">4. Text Manipulation</h3>
+                            <p class="mb-4">Commands to view and edit text files:</p>
+                            
+                            <div class="code-container">
+                                <pre class="language-bash rounded-lg"><code># View first few lines
+head filename.txt
+
+# View last few lines
+tail filename.txt
+
+# Search for text
+grep "search_text" filename.txt
+
+# Count lines, words, characters
+wc filename.txt
+
+# Edit a file
+nano filename.txt</code></pre>
+                                <button class="clipboard-button" onclick="copyToClipboard(this)">Copy Code</button>
+                            </div>
+
+                            <div class="mt-4">
+                                <h4 class="font-semibold mb-2">Example Output:</h4>
+                                <div class="bg-gray-800 text-gray-100 p-4 rounded-lg">
+                                    <pre class="text-sm">$ cat sample.txt
+Line 1
+Line 2
+Line 3
+
+$ head -n 2 sample.txt
+Line 1
+Line 2
+
+$ grep "Line" sample.txt
+Line 1
+Line 2
+Line 3</pre>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="mb-8">
+                    <h2 class="text-xl md:text-2xl font-bold text-blue-700 mb-4">Practice Exercise</h2>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p class="mb-4">Try these exercises to practice what you've learned:</p>
+                        <ol class="list-decimal pl-6 space-y-2">
+                            <li>Create a new directory called "practice"</li>
+                            <li>Create a text file named "hello.txt" in that directory</li>
+                            <li>Add some text to the file using nano</li>
+                            <li>Make a copy of the file named "hello_backup.txt"</li>
+                            <li>List all files in the directory with details</li>
+                            <li>Search for specific text in your file</li>
+                        </ol>
+                    </div>
+                </section>
+
+                <section class="mb-8">
+                    <h2 class="text-xl md:text-2xl font-bold text-blue-700 mb-4">Summary</h2>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p>In this lab, we've learned essential UNIX commands for:</p>
+                        <ul class="list-disc pl-6 mt-2">
+                            <li><strong>Navigation:</strong> Moving around the file system</li>
+                            <li><strong>File Operations:</strong> Creating, copying, moving, and deleting files</li>
+                            <li><strong>Directory Management:</strong> Creating and managing directories</li>
+                            <li><strong>Text Manipulation:</strong> Viewing and editing text files</li>
+                        </ul>
+                        
+                        <div class="mt-4">
+                            <h3 class="font-bold text-lg">Key Points to Remember:</h3>
+                            <ul class="list-disc pl-6 mt-2">
+                                <li>Commands are case-sensitive</li>
+                                <li>Use spaces to separate commands and arguments</li>
+                                <li>Use tab for auto-completion</li>
+                                <li>Use up/down arrows to access command history</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="mt-4">
+                            <h3 class="font-bold text-lg">Next Steps:</h3>
+                            <ul class="list-disc pl-6 mt-2">
+                                <li>Practice these commands regularly</li>
+                                <li>Try combining commands using pipes (|)</li>
+                                <li>Learn about file permissions</li>
+                                <li>Explore more advanced commands</li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+            </main>
+
+            <footer class="text-center text-gray-500 text-sm mt-8">
+                <p>© 2025 Basic UNIX Commands Lab Experiment</p>
+            </footer>
+        </div>
+    </div>
+
+    <script>
+        function copyToClipboard(button) {
+            const container = button.parentElement;
+            const codeBlock = container.querySelector('code');
+            const textToCopy = codeBlock.textContent;
+            
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                const originalText = button.textContent;
+                button.textContent = 'Code Copied!';
+                button.style.backgroundColor = '#10B981';
+                
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.style.backgroundColor = '#334155';
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+                button.textContent = 'Copy Failed!';
+                button.style.backgroundColor = '#EF4444';
+                
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.style.backgroundColor = '#334155';
+                }, 2000);
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            Prism.highlightAll();
+
+            // Sidebar toggle functionality
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.getElementById('mainContent');
+
+            sidebarToggle.addEventListener('click', (e) => {
+                e.stopPropagation();
+                sidebar.classList.toggle('active');
+                mainContent.classList.toggle('sidebar-active');
+            });
+
+            // Close sidebar when clicking outside on mobile
+            document.addEventListener('click', (e) => {
+                if (window.innerWidth <= 768) {
+                    if (!sidebar.contains(e.target) && !sidebarToggle.contains(e.target)) {
+                        sidebar.classList.remove('active');
+                        mainContent.classList.remove('sidebar-active');
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>

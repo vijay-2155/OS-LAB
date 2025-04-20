@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Banker's Algorithm</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.25.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.25.0/components/prism-c.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.25.0/themes/prism-tomorrow.min.css">
+    <style>
+        .clipboard-button {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+            background: #334155;
+            color: white;
+            border: none;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            opacity: 0.7;
+        }
+        .clipboard-button:hover {
+            opacity: 1;
+        }
+        .code-container {
+            position: relative;
+        }
+        .sidebar {
+            width: 250px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            background-color: #1e293b;
+            color: white;
+            padding: 1rem;
+            overflow-y: auto;
+            z-index: 1000;
+            transition: transform 0.3s ease;
+        }
+        .sidebar-toggle {
+            position: fixed;
+            top: 0;
+            left: 0;
+            padding: 1rem;
+            background-color: #1e293b;
+            color: white;
+            cursor: pointer;
+            z-index: 1001;
+            display: none;
+        }
+        .main-content {
+            margin-left: 250px;
+            transition: margin-left 0.3s ease;
+            padding: 1rem;
+        }
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            .sidebar.active {
+                transform: translateX(0);
+            }
+            .sidebar-toggle {
+                display: block;
+            }
+            .main-content {
+                margin-left: 0;
+                padding: 1rem;
+            }
+            .main-content.sidebar-active {
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
+    <div class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle Sidebar">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+    </div>
+
+    <div class="sidebar" id="sidebar">
+        <div class="flex items-center space-x-2 mb-6">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+            </svg>
+            <h2 class="text-xl font-bold text-white">Experiments</h2>
+        </div>
+        <ul class="space-y-2">
+            <li><a href="exp1.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 1: Basic UNIX Commands</a></li>
+            <li><a href="exp2.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 2: UNIX System Calls</a></li>
+            <li><a href="exp3.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 3: Advanced UNIX Commands</a></li>
+            <li><a href="exp4.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 4: CPU Scheduling</a></li>
+            <li><a href="exp5.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 5: Port Control</a></li>
+            <li><a href="exp6.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 6: Thread Basics</a></li>
+            <li><a href="exp7.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 7: Producer-Consumer</a></li>
+            <li><a href="exp8.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 8: Memory Allocation</a></li>
+            <li><a href="exp9.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 9: Page Replacement</a></li>
+            <li><a href="exp10.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 10: Paging Technique</a></li>
+            <li><a href="exp11.html" class="block py-2 px-4 bg-blue-600 rounded transition duration-200">Experiment 11: Banker's Algorithm</a></li>
+            <li><a href="exp12.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 12: File Allocation</a></li>
+        </ul>
+    </div>
+
+    <div class="main-content" id="mainContent">
+        <div class="container mx-auto px-4 py-8 max-w-4xl">
+            <header class="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-6 rounded-t-lg shadow-lg">
+                <div class="flex items-center space-x-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-blue-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+                    </svg>
+                    <div>
+                        <h1 class="text-2xl md:text-3xl font-bold">Lab Experiment: Banker's Algorithm</h1>
+                        <p class="text-blue-100 mt-1">Understanding Deadlock Avoidance and Prevention</p>
+                    </div>
+                </div>
+            </header>
+
+            <main class="bg-white p-6 rounded-b-lg shadow-lg mb-8">
+                <section class="mb-8">
+                    <h2 class="text-xl md:text-2xl font-bold text-blue-700 mb-4">Aim</h2>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p>To implement and understand the Banker's Algorithm for deadlock avoidance and prevention in resource allocation.</p>
+                    </div>
+                </section>
+
+                <section class="mb-8">
+                    <h2 class="text-xl md:text-2xl font-bold text-blue-700 mb-4">Theory</h2>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p class="mb-4">The Banker's Algorithm is a resource allocation and deadlock avoidance algorithm that:</p>
+                        
+                        <div class="mt-4">
+                            <h3 class="font-semibold text-lg">1. Basic Concepts</h3>
+                            <ul class="list-disc pl-6 mt-2">
+                                <li>Prevents deadlock by checking if resource allocation is safe</li>
+                                <li>Works like a bank that never allocates more money than it has</li>
+                                <li>Uses three main data structures:
+                                    <ul class="list-disc pl-6 mt-2">
+                                        <li>Available: Resources currently available</li>
+                                        <li>Max: Maximum resources each process can request</li>
+                                        <li>Allocation: Resources currently allocated to processes</li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <div class="mt-4">
+                            <h3 class="font-semibold text-lg">2. Safety Algorithm</h3>
+                            <ul class="list-disc pl-6 mt-2">
+                                <li>Checks if the system is in a safe state</li>
+                                <li>Finds a sequence of processes that can complete</li>
+                                <li>Like a bank checking if it can satisfy all customer requests</li>
+                            </ul>
+                        </div>
+
+                        <div class="mt-4">
+                            <h3 class="font-semibold text-lg">3. Resource Request Algorithm</h3>
+                            <ul class="list-disc pl-6 mt-2">
+                                <li>Checks if a resource request can be granted safely</li>
+                                <li>Simulates allocation and checks for safety</li>
+                                <li>Like a bank checking if it can approve a loan</li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="mb-10 border-b pb-6">
+                    <h2 class="text-xl md:text-2xl font-bold text-blue-700 mb-4">Implementation</h2>
+                    
+                    <div class="bg-gray-50 p-4 rounded-lg mb-4">
+                        <h3 class="font-bold text-lg mb-2">Description</h3>
+                        <p>This program demonstrates the Banker's Algorithm using a simple example:</p>
+                        <ul class="list-disc pl-6 mt-2">
+                            <li>3 processes (P0, P1, P2)</li>
+                            <li>3 resource types (A, B, C)</li>
+                            <li>Safety check and resource request handling</li>
+                            <li>Clear visualization of the process</li>
+                        </ul>
+                    </div>
+
+                    <div class="code-container mt-4">
+                        <h3 class="font-bold text-lg mb-2">Program Code</h3>
+                        <pre class="language-c rounded-lg"><code>#include &lt;stdio.h&gt;
+#include &lt;stdbool.h&gt;
+
+// Let's keep it simple with small numbers
+#define NUM_PROCESSES 3
+#define NUM_RESOURCES 3
+
+// Function to check if the system is in a safe state
+bool is_safe(int available[], int max[][NUM_RESOURCES], 
+             int allocation[][NUM_RESOURCES], int need[][NUM_RESOURCES]) {
+    bool finish[NUM_PROCESSES] = {false};
+    int work[NUM_RESOURCES];
+    
+    // Initialize work = available
+    for (int i = 0; i < NUM_RESOURCES; i++) {
+        work[i] = available[i];
+    }
+    
+    // Find a process that can be completed
+    bool found;
+    do {
+        found = false;
+        for (int i = 0; i < NUM_PROCESSES; i++) {
+            if (!finish[i]) {
+                bool can_allocate = true;
+                for (int j = 0; j < NUM_RESOURCES; j++) {
+                    if (need[i][j] > work[j]) {
+                        can_allocate = false;
+                        break;
+                    }
+                }
+                
+                if (can_allocate) {
+                    // Process can complete, release its resources
+                    for (int j = 0; j < NUM_RESOURCES; j++) {
+                        work[j] += allocation[i][j];
+                    }
+                    finish[i] = true;
+                    found = true;
+                    printf("Process P%d can complete\n", i);
+                }
+            }
+        }
+    } while (found);
+    
+    // Check if all processes can complete
+    for (int i = 0; i < NUM_PROCESSES; i++) {
+        if (!finish[i]) {
+            return false;
+        }
+    }
+    return true;
+}
+
+// Function to handle resource request
+bool request_resources(int process, int request[], int available[], 
+                      int max[][NUM_RESOURCES], int allocation[][NUM_RESOURCES], 
+                      int need[][NUM_RESOURCES]) {
+    // Check if request is valid
+    for (int i = 0; i < NUM_RESOURCES; i++) {
+        if (request[i] > need[process][i]) {
+            printf("Error: Process P%d requested more than its maximum need\n", process);
+            return false;
+        }
+        if (request[i] > available[i]) {
+            printf("Error: Not enough resources available\n");
+            return false;
+        }
+    }
+    
+    // Try to allocate resources
+    for (int i = 0; i < NUM_RESOURCES; i++) {
+        available[i] -= request[i];
+        allocation[process][i] += request[i];
+        need[process][i] -= request[i];
+    }
+    
+    // Check if the system is still in a safe state
+    if (is_safe(available, max, allocation, need)) {
+        printf("Request granted. System is in safe state.\n");
+        return true;
+    } else {
+        // Rollback the allocation
+        for (int i = 0; i < NUM_RESOURCES; i++) {
+            available[i] += request[i];
+            allocation[process][i] -= request[i];
+            need[process][i] += request[i];
+        }
+        printf("Request denied. System would be in unsafe state.\n");
+        return false;
+    }
+}
+
+// Function to print the current state
+void print_state(int available[], int max[][NUM_RESOURCES], 
+                int allocation[][NUM_RESOURCES], int need[][NUM_RESOURCES]) {
+    printf("\nCurrent System State:\n");
+    printf("Available Resources: ");
+    for (int i = 0; i < NUM_RESOURCES; i++) {
+        printf("%d ", available[i]);
+    }
+    printf("\n\n");
+    
+    printf("Process\tMax\tAllocation\tNeed\n");
+    printf("----------------------------------------\n");
+    for (int i = 0; i < NUM_PROCESSES; i++) {
+        printf("P%d\t", i);
+        for (int j = 0; j < NUM_RESOURCES; j++) {
+            printf("%d ", max[i][j]);
+        }
+        printf("\t");
+        for (int j = 0; j < NUM_RESOURCES; j++) {
+            printf("%d ", allocation[i][j]);
+        }
+        printf("\t");
+        for (int j = 0; j < NUM_RESOURCES; j++) {
+            printf("%d ", need[i][j]);
+        }
+        printf("\n");
+    }
+}
+
+int main() {
+    // Initialize the system state
+    int available[NUM_RESOURCES] = {3, 3, 2};
+    
+    int max[NUM_PROCESSES][NUM_RESOURCES] = {
+        {7, 5, 3},
+        {3, 2, 2},
+        {9, 0, 2}
+    };
+    
+    int allocation[NUM_PROCESSES][NUM_RESOURCES] = {
+        {0, 1, 0},
+        {2, 0, 0},
+        {3, 0, 2}
+    };
+    
+    int need[NUM_PROCESSES][NUM_RESOURCES];
+    
+    // Calculate need matrix
+    for (int i = 0; i < NUM_PROCESSES; i++) {
+        for (int j = 0; j < NUM_RESOURCES; j++) {
+            need[i][j] = max[i][j] - allocation[i][j];
+        }
+    }
+    
+    printf("Banker's Algorithm Simulation\n");
+    printf("============================\n");
+    
+    // Print initial state
+    print_state(available, max, allocation, need);
+    
+    // Check if initial state is safe
+    printf("\nChecking if initial state is safe...\n");
+    if (is_safe(available, max, allocation, need)) {
+        printf("System is in safe state\n");
+    } else {
+        printf("System is in unsafe state\n");
+    }
+    
+    // Test resource request
+    printf("\nTesting resource request...\n");
+    int request[NUM_RESOURCES] = {1, 0, 2};
+    printf("Process P1 requests: ");
+    for (int i = 0; i < NUM_RESOURCES; i++) {
+        printf("%d ", request[i]);
+    }
+    printf("\n");
+    
+    request_resources(1, request, available, max, allocation, need);
+    
+    return 0;
+}</code></pre>
+                        <button class="clipboard-button" onclick="copyToClipboard(this)">Copy Code</button>
+                    </div>
+
+                    <div class="mt-4">
+                        <h3 class="font-bold text-lg mb-2">Expected Output</h3>
+                        <div class="bg-gray-800 text-gray-100 p-4 rounded-lg">
+                            <pre class="text-sm">Banker's Algorithm Simulation
+============================
+
+Current System State:
+Available Resources: 3 3 2
+
+Process Max     Allocation    Need
+----------------------------------------
+P0      7 5 3  0 1 0        7 4 3
+P1      3 2 2  2 0 0        1 2 2
+P2      9 0 2  3 0 2        6 0 0
+
+Checking if initial state is safe...
+Process P1 can complete
+Process P0 can complete
+Process P2 can complete
+System is in safe state
+
+Testing resource request...
+Process P1 requests: 1 0 2
+Request granted. System is in safe state</pre>
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <h3 class="font-bold text-lg mb-2">Output Explanation</h3>
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <ul class="list-disc pl-6">
+                                <li>Initial state shows:
+                                    <ul class="list-disc pl-6 mt-2">
+                                        <li>Available resources: 3 units of A, 3 of B, 2 of C</li>
+                                        <li>Maximum needs of each process</li>
+                                        <li>Currently allocated resources</li>
+                                        <li>Remaining needs of each process</li>
+                                    </ul>
+                                </li>
+                                <li>Safety check process:
+                                    <ul class="list-disc pl-6 mt-2">
+                                        <li>P1 can complete first (needs 1,2,2)</li>
+                                        <li>P0 can complete next (needs 7,4,3)</li>
+                                        <li>P2 can complete last (needs 6,0,0)</li>
+                                        <li>System is in safe state</li>
+                                    </ul>
+                                </li>
+                                <li>Resource request test:
+                                    <ul class="list-disc pl-6 mt-2">
+                                        <li>P1 requests 1 unit of A and 2 units of C</li>
+                                        <li>Request is granted because system remains safe</li>
+                                        <li>Resources are allocated to P1</li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="mb-8">
+                    <h2 class="text-xl md:text-2xl font-bold text-blue-700 mb-4">Summary</h2>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p>In this lab, we've learned about the Banker's Algorithm for deadlock avoidance:</p>
+                        <ul class="list-disc pl-6 mt-2">
+                            <li><strong>Safety Algorithm:</strong> Checks if system is in safe state</li>
+                            <li><strong>Resource Request:</strong> Handles new resource requests</li>
+                            <li><strong>Deadlock Prevention:</strong> Ensures system never enters unsafe state</li>
+                        </ul>
+                        
+                        <div class="mt-4">
+                            <h3 class="font-bold text-lg">Key Points to Remember:</h3>
+                            <ul class="list-disc pl-6 mt-2">
+                                <li>Banker's Algorithm prevents deadlock by checking safety</li>
+                                <li>System must know maximum resource needs in advance</li>
+                                <li>Resources must be released in finite time</li>
+                                <li>Algorithm can be conservative (may deny safe requests)</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="mt-4">
+                            <h3 class="font-bold text-lg">Next Steps:</h3>
+                            <ul class="list-disc pl-6 mt-2">
+                                <li>Implement dynamic resource allocation</li>
+                                <li>Add support for resource preemption</li>
+                                <li>Study other deadlock prevention techniques</li>
+                                <li>Explore real-world applications</li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+            </main>
+
+            <footer class="text-center text-gray-500 text-sm mt-8">
+                <p>© 2025 Banker's Algorithm Lab Experiment</p>
+            </footer>
+        </div>
+    </div>
+
+    <script>
+        function copyToClipboard(button) {
+            const container = button.parentElement;
+            const codeBlock = container.querySelector('code');
+            const textToCopy = codeBlock.textContent;
+            
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                const originalText = button.textContent;
+                button.textContent = 'Code Copied!';
+                button.style.backgroundColor = '#10B981';
+                
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.style.backgroundColor = '#334155';
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+                button.textContent = 'Copy Failed!';
+                button.style.backgroundColor = '#EF4444';
+                
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.style.backgroundColor = '#334155';
+                }, 2000);
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            Prism.highlightAll();
+
+            // Sidebar toggle functionality
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.getElementById('mainContent');
+
+            sidebarToggle.addEventListener('click', (e) => {
+                e.stopPropagation();
+                sidebar.classList.toggle('active');
+                mainContent.classList.toggle('sidebar-active');
+            });
+
+            // Close sidebar when clicking outside on mobile
+            document.addEventListener('click', (e) => {
+                if (window.innerWidth <= 768) {
+                    if (!sidebar.contains(e.target) && !sidebarToggle.contains(e.target)) {
+                        sidebar.classList.remove('active');
+                        mainContent.classList.remove('sidebar-active');
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>

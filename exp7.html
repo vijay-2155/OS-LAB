@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Producer-Consumer Problem with Semaphores</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.25.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.25.0/components/prism-c.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.25.0/themes/prism-tomorrow.min.css">
+    <style>
+        .clipboard-button {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+            background: #334155;
+            color: white;
+            border: none;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            opacity: 0.7;
+        }
+        .clipboard-button:hover {
+            opacity: 1;
+        }
+        .code-container {
+            position: relative;
+        }
+        .sidebar {
+            width: 250px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            background-color: #1e293b;
+            color: white;
+            padding: 1rem;
+            overflow-y: auto;
+            z-index: 1000;
+            transition: transform 0.3s ease;
+        }
+        .sidebar-toggle {
+            position: fixed;
+            top: 0;
+            left: 0;
+            padding: 1rem;
+            background-color: #1e293b;
+            color: white;
+            cursor: pointer;
+            z-index: 1001;
+            display: none;
+        }
+        .main-content {
+            margin-left: 250px;
+            transition: margin-left 0.3s ease;
+            padding: 1rem;
+        }
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            .sidebar.active {
+                transform: translateX(0);
+            }
+            .sidebar-toggle {
+                display: block;
+            }
+            .main-content {
+                margin-left: 0;
+                padding: 1rem;
+            }
+            .main-content.sidebar-active {
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
+    <div class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle Sidebar">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+    </div>
+
+    <div class="sidebar" id="sidebar">
+        <div class="flex items-center space-x-2 mb-6">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+            </svg>
+            <h2 class="text-xl font-bold text-white">Experiments</h2>
+        </div>
+        <ul class="space-y-2">
+            <li><a href="exp1.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 1: Basic UNIX Commands</a></li>
+            <li><a href="exp2.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 2: UNIX System Calls</a></li>
+            <li><a href="exp3.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 3: Advanced UNIX Commands</a></li>
+            <li><a href="exp4.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 4: CPU Scheduling</a></li>
+            <li><a href="exp5.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 5: Port Control</a></li>
+            <li><a href="exp6.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 6: Thread Basics</a></li>
+            <li><a href="exp7.html" class="block py-2 px-4 bg-blue-600 rounded transition duration-200">Experiment 7: Producer-Consumer</a></li>
+            <li><a href="exp8.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 8: Memory Allocation</a></li>
+            <li><a href="exp9.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 9: Page Replacement</a></li>
+            <li><a href="exp10.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 10: Paging Technique</a></li>
+            <li><a href="exp11.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 11: Banker's Algorithm</a></li>
+            <li><a href="exp12.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 12: File Allocation</a></li>
+        </ul>
+    </div>
+
+    <div class="main-content" id="mainContent">
+        <div class="container mx-auto px-4 py-8 max-w-4xl">
+            <header class="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-6 rounded-t-lg shadow-lg">
+                <div class="flex items-center space-x-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-blue-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+                    </svg>
+                    <div>
+                        <h1 class="text-2xl md:text-3xl font-bold">Lab Experiment: Producer-Consumer Problem</h1>
+                        <p class="text-blue-100 mt-1">Understanding synchronization using semaphores</p>
+                    </div>
+                </div>
+            </header>
+
+            <main class="bg-white p-6 rounded-b-lg shadow-lg mb-8">
+                <section class="mb-8">
+                    <h2 class="text-xl md:text-2xl font-bold text-blue-700 mb-4">Aim</h2>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p>To implement and understand the producer-consumer problem using semaphores for synchronization.</p>
+                    </div>
+                </section>
+
+                <section class="mb-8">
+                    <h2 class="text-xl md:text-2xl font-bold text-blue-700 mb-4">Theory</h2>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p class="mb-4">The producer-consumer problem is a classic synchronization problem where:</p>
+                        
+                        <div class="mt-4">
+                            <h3 class="font-semibold text-lg">1. What is the Producer-Consumer Problem?</h3>
+                            <ul class="list-disc pl-6 mt-2">
+                                <li>Producers create items and put them in a shared buffer</li>
+                                <li>Consumers take items from the buffer and process them</li>
+                                <li>The buffer has limited capacity</li>
+                                <li>Producers must wait if buffer is full</li>
+                                <li>Consumers must wait if buffer is empty</li>
+                            </ul>
+                        </div>
+
+                        <div class="mt-4">
+                            <h3 class="font-semibold text-lg">2. How Semaphores Help</h3>
+                            <ul class="list-disc pl-6 mt-2">
+                                <li><code>empty</code>: Counts empty slots in buffer</li>
+                                <li><code>full</code>: Counts filled slots in buffer</li>
+                                <li><code>mutex</code>: Ensures only one thread accesses buffer at a time</li>
+                                <li>Producers wait on <code>empty</code> and signal <code>full</code></li>
+                                <li>Consumers wait on <code>full</code> and signal <code>empty</code></li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="mb-10 border-b pb-6">
+                    <h2 class="text-xl md:text-2xl font-bold text-blue-700 mb-4">Implementation</h2>
+                    
+                    <div class="bg-gray-50 p-4 rounded-lg mb-4">
+                        <h3 class="font-bold text-lg mb-2">Description</h3>
+                        <p>This program simulates a simple producer-consumer scenario where:</p>
+                        <ul class="list-disc pl-6 mt-2">
+                            <li>Producers create items (numbers) and add them to a shared buffer</li>
+                            <li>Consumers take items from the buffer and process them</li>
+                            <li>Semaphores ensure proper synchronization</li>
+                            <li>The buffer has a fixed size of 3 items</li>
+                        </ul>
+                    </div>
+
+                    <div class="code-container mt-4">
+                        <h3 class="font-bold text-lg mb-2">Program Code</h3>
+                        <pre class="language-c rounded-lg"><code>#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;pthread.h&gt;
+#include &lt;semaphore.h&gt;
+
+// Let's keep it simple with a small buffer
+#define BUFFER_SIZE 3
+#define NUM_ITEMS 5  // Fewer items to make it easier to follow
+
+// Our shared buffer (like a small shelf)
+int buffer[BUFFER_SIZE];
+int in = 0;   // Where the producer puts items
+int out = 0;  // Where the consumer takes items
+
+// Three important semaphores (like traffic signals)
+sem_t empty;  // Tells us how many empty spots are available
+sem_t full;   // Tells us how many items are ready to be taken
+sem_t mutex;  // Makes sure only one person can access the buffer at a time
+
+// The producer's job
+void* producer(void* arg) {
+    int item;
+    printf("Producer: I'm ready to make items!\n");
+    
+    for (int i = 0; i < NUM_ITEMS; i++) {
+        // Make a new item (just a random number)
+        item = rand() % 100;
+        
+        // Wait for an empty spot
+        printf("Producer: Waiting for an empty spot...\n");
+        sem_wait(&empty);
+        
+        // Get permission to use the buffer
+        printf("Producer: Getting permission to use the buffer...\n");
+        sem_wait(&mutex);
+        
+        // Put the item in the buffer
+        buffer[in] = item;
+        printf("Producer: Put item %d in spot %d\n", item, in);
+        in = (in + 1) % BUFFER_SIZE;
+        
+        // Release the buffer
+        sem_post(&mutex);
+        
+        // Tell everyone there's a new item
+        printf("Producer: Announcing a new item is ready!\n");
+        sem_post(&full);
+        
+        // Take a short break
+        sleep(1);
+    }
+    printf("Producer: I'm done making items!\n");
+    return NULL;
+}
+
+// The consumer's job
+void* consumer(void* arg) {
+    int item;
+    printf("Consumer: I'm ready to take items!\n");
+    
+    for (int i = 0; i < NUM_ITEMS; i++) {
+        // Wait for an item to be available
+        printf("Consumer: Waiting for an item...\n");
+        sem_wait(&full);
+        
+        // Get permission to use the buffer
+        printf("Consumer: Getting permission to use the buffer...\n");
+        sem_wait(&mutex);
+        
+        // Take an item from the buffer
+        item = buffer[out];
+        printf("Consumer: Took item %d from spot %d\n", item, out);
+        out = (out + 1) % BUFFER_SIZE;
+        
+        // Release the buffer
+        sem_post(&mutex);
+        
+        // Tell everyone there's an empty spot
+        printf("Consumer: Announcing an empty spot is available!\n");
+        sem_post(&empty);
+        
+        // Take a short break
+        sleep(2);
+    }
+    printf("Consumer: I'm done taking items!\n");
+    return NULL;
+}
+
+int main() {
+    pthread_t producer_thread, consumer_thread;
+    
+    // Set up our semaphores
+    printf("Setting up the system...\n");
+    sem_init(&empty, 0, BUFFER_SIZE);  // Start with all spots empty
+    sem_init(&full, 0, 0);             // Start with no items
+    sem_init(&mutex, 0, 1);            // Only one person can use the buffer
+    
+    printf("Starting the producer and consumer...\n");
+    
+    // Start the producer and consumer
+    pthread_create(&producer_thread, NULL, producer, NULL);
+    pthread_create(&consumer_thread, NULL, consumer, NULL);
+    
+    // Wait for them to finish
+    pthread_join(producer_thread, NULL);
+    pthread_join(consumer_thread, NULL);
+    
+    // Clean up
+    printf("Cleaning up...\n");
+    sem_destroy(&empty);
+    sem_destroy(&full);
+    sem_destroy(&mutex);
+    
+    printf("All done!\n");
+    return 0;
+}</code></pre>
+                        <button class="clipboard-button" onclick="copyToClipboard(this)">Copy Code</button>
+                    </div>
+
+                    <div class="mt-4">
+                        <h3 class="font-bold text-lg mb-2">Expected Output</h3>
+                        <div class="bg-gray-800 text-gray-100 p-4 rounded-lg">
+                            <pre class="text-sm">Setting up the system...
+Starting the producer and consumer...
+Producer: I'm ready to make items!
+Consumer: I'm ready to take items!
+Producer: Waiting for an empty spot...
+Producer: Getting permission to use the buffer...
+Producer: Put item 83 in spot 0
+Producer: Announcing a new item is ready!
+Consumer: Waiting for an item...
+Consumer: Getting permission to use the buffer...
+Consumer: Took item 83 from spot 0
+Consumer: Announcing an empty spot is available!
+Producer: Waiting for an empty spot...
+Producer: Getting permission to use the buffer...
+Producer: Put item 86 in spot 1
+Producer: Announcing a new item is ready!
+Producer: Waiting for an empty spot...
+Producer: Getting permission to use the buffer...
+Producer: Put item 77 in spot 2
+Producer: Announcing a new item is ready!
+Consumer: Waiting for an item...
+Consumer: Getting permission to use the buffer...
+Consumer: Took item 86 from spot 1
+Consumer: Announcing an empty spot is available!
+Producer: Waiting for an empty spot...
+Producer: Getting permission to use the buffer...
+Producer: Put item 15 in spot 0
+Producer: Announcing a new item is ready!
+Consumer: Waiting for an item...
+Consumer: Getting permission to use the buffer...
+Consumer: Took item 77 from spot 2
+Consumer: Announcing an empty spot is available!
+Producer: Waiting for an empty spot...
+Producer: Getting permission to use the buffer...
+Producer: Put item 93 in spot 1
+Producer: Announcing a new item is ready!
+Producer: I'm done making items!
+Consumer: Waiting for an item...
+Consumer: Getting permission to use the buffer...
+Consumer: Took item 15 from spot 0
+Consumer: Announcing an empty spot is available!
+Consumer: Waiting for an item...
+Consumer: Getting permission to use the buffer...
+Consumer: Took item 93 from spot 1
+Consumer: Announcing an empty spot is available!
+Consumer: I'm done taking items!
+Cleaning up...
+All done!</pre>
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <h3 class="font-bold text-lg mb-2">Output Explanation</h3>
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <ul class="list-disc pl-6">
+                                <li>The producer and consumer start at the same time</li>
+                                <li>Producer makes items and puts them in the buffer</li>
+                                <li>Consumer takes items from the buffer</li>
+                                <li>Each step is clearly shown with messages</li>
+                                <li>You can see how they take turns using the buffer</li>
+                                <li>The buffer positions wrap around (0, 1, 2, then back to 0)</li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="mb-8">
+                    <h2 class="text-xl md:text-2xl font-bold text-blue-700 mb-4">Summary</h2>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p>In this lab, we've learned about the producer-consumer problem and how to solve it using semaphores:</p>
+                        <ul class="list-disc pl-6 mt-2">
+                            <li><strong>Producer-Consumer Problem:</strong> Coordinating producers and consumers with a shared buffer</li>
+                            <li><strong>Semaphores:</strong> Using empty, full, and mutex semaphores for synchronization</li>
+                            <li><strong>Thread Safety:</strong> Ensuring safe access to shared resources</li>
+                        </ul>
+                        
+                        <div class="mt-4">
+                            <h3 class="font-bold text-lg">Key Points to Remember:</h3>
+                            <ul class="list-disc pl-6 mt-2">
+                                <li>Always initialize semaphores with correct initial values</li>
+                                <li>Use mutex to protect critical sections</li>
+                                <li>Wait on empty before producing and full before consuming</li>
+                                <li>Signal full after producing and empty after consuming</li>
+                                <li>Clean up semaphores when done</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="mt-4">
+                            <h3 class="font-bold text-lg">Next Steps:</h3>
+                            <ul class="list-disc pl-6 mt-2">
+                                <li>Try different buffer sizes and production/consumption rates</li>
+                                <li>Add multiple producers and consumers</li>
+                                <li>Implement error handling for semaphore operations</li>
+                                <li>Study other synchronization problems (e.g., readers-writers)</li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+            </main>
+
+            <footer class="text-center text-gray-500 text-sm mt-8">
+                <p>© 2025 Producer-Consumer Lab Experiment</p>
+            </footer>
+        </div>
+    </div>
+
+    <script>
+        function copyToClipboard(button) {
+            const container = button.parentElement;
+            const codeBlock = container.querySelector('code');
+            const textToCopy = codeBlock.textContent;
+            
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                const originalText = button.textContent;
+                button.textContent = 'Code Copied!';
+                button.style.backgroundColor = '#10B981';
+                
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.style.backgroundColor = '#334155';
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+                button.textContent = 'Copy Failed!';
+                button.style.backgroundColor = '#EF4444';
+                
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.style.backgroundColor = '#334155';
+                }, 2000);
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            Prism.highlightAll();
+
+            // Sidebar toggle functionality
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.getElementById('mainContent');
+
+            sidebarToggle.addEventListener('click', (e) => {
+                e.stopPropagation();
+                sidebar.classList.toggle('active');
+                mainContent.classList.toggle('sidebar-active');
+            });
+
+            // Close sidebar when clicking outside on mobile
+            document.addEventListener('click', (e) => {
+                if (window.innerWidth <= 768) {
+                    if (!sidebar.contains(e.target) && !sidebarToggle.contains(e.target)) {
+                        sidebar.classList.remove('active');
+                        mainContent.classList.remove('sidebar-active');
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>

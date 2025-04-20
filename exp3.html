@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UNIX Commands Lab</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.25.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.25.0/components/prism-bash.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.25.0/themes/prism-tomorrow.min.css">
+    <style>
+        .clipboard-button {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+            background: #334155;
+            color: white;
+            border: none;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            opacity: 0.7;
+        }
+        .clipboard-button:hover {
+            opacity: 1;
+        }
+        .code-container {
+            position: relative;
+        }
+        .sidebar {
+            width: 250px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            background-color: #1e293b;
+            color: white;
+            padding: 1rem;
+            overflow-y: auto;
+            z-index: 1000;
+            transition: transform 0.3s ease;
+        }
+        .sidebar-toggle {
+            position: fixed;
+            top: 0;
+            left: 0;
+            padding: 1rem;
+            background-color: #1e293b;
+            color: white;
+            cursor: pointer;
+            z-index: 1001;
+            display: none;
+        }
+        .main-content {
+            margin-left: 250px;
+            transition: margin-left 0.3s ease;
+            padding: 1rem;
+        }
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            .sidebar.active {
+                transform: translateX(0);
+            }
+            .sidebar-toggle {
+                display: block;
+            }
+            .main-content {
+                margin-left: 0;
+                padding: 1rem;
+            }
+            .main-content.sidebar-active {
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
+    <div class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle Sidebar">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+    </div>
+
+    <div class="sidebar" id="sidebar">
+        <div class="flex items-center space-x-2 mb-6">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+            </svg>
+            <h2 class="text-xl font-bold text-white">Experiments</h2>
+        </div>
+        <ul class="space-y-2">
+            <li><a href="exp1.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 1: Basic UNIX Commands</a></li>
+            <li><a href="exp2.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 2: UNIX System Calls</a></li>
+            <li><a href="exp3.html" class="block py-2 px-4 bg-blue-600 rounded transition duration-200">Experiment 3: Advanced UNIX Commands</a></li>
+            <li><a href="exp4.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 4: CPU Scheduling</a></li>
+            <li><a href="exp5.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 5: Port Control</a></li>
+            <li><a href="exp6.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 6: Thread Basics</a></li>
+            <li><a href="exp7.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 7: Producer-Consumer</a></li>
+            <li><a href="exp8.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 8: Memory Allocation</a></li>
+            <li><a href="exp9.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 9: Page Replacement</a></li>
+            <li><a href="exp10.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 10: Paging Technique</a></li>
+            <li><a href="exp11.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 11: Banker's Algorithm</a></li>
+            <li><a href="exp12.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 12: File Allocation</a></li>
+        </ul>
+    </div>
+
+    <div class="main-content" id="mainContent">
+        <div class="container mx-auto px-4 py-8 max-w-4xl">
+            <header class="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-6 rounded-t-lg shadow-lg">
+                <div class="flex items-center space-x-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-blue-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+                    </svg>
+                    <div>
+                        <h1 class="text-2xl md:text-3xl font-bold">Lab Experiment: Advanced UNIX Commands</h1>
+                        <p class="text-blue-100 mt-1">Learn essential UNIX commands for file and text manipulation</p>
+                    </div>
+                </div>
+            </header>
+
+            <main class="bg-white p-6 rounded-b-lg shadow-lg mb-8">
+                <section class="mb-8">
+                    <h2 class="text-xl md:text-2xl font-bold text-blue-700 mb-4">Title of Experiment</h2>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p class="text-lg">Advanced UNIX Commands for File and Text Manipulation</p>
+                        <p class="mt-2 text-gray-600">This experiment will help you learn essential UNIX commands for managing files and processing text. Each command is explained with simple examples and step-by-step instructions.</p>
+                    </div>
+                </section>
+
+                <section class="mb-8">
+                    <h2 class="text-xl md:text-2xl font-bold text-blue-700 mb-4">Aim</h2>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p>To understand and practice advanced UNIX commands for file manipulation, text processing, and system administration. By the end of this experiment, you will be able to:</p>
+                        <ul class="list-disc pl-6 mt-2">
+                            <li>Copy and move files efficiently</li>
+                            <li>List and organize directory contents</li>
+                            <li>Search and process text in files</li>
+                            <li>Combine commands to perform complex operations</li>
+                        </ul>
+                    </div>
+                </section>
+
+                <section class="mb-8">
+                    <h2 class="text-xl md:text-2xl font-bold text-blue-700 mb-4">Theory</h2>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p class="mb-4">UNIX provides powerful commands for file and text manipulation. These commands can be combined using pipes and redirection to perform complex operations efficiently.</p>
+                        
+                        <div class="mt-4">
+                            <h3 class="font-semibold text-lg">Basic Concepts:</h3>
+                            <ul class="list-disc pl-6 mt-2">
+                                <li><strong>File Operations:</strong> Copying, moving, and comparing files</li>
+                                <li><strong>Text Processing:</strong> Searching, filtering, and transforming text</li>
+                                <li><strong>Directory Management:</strong> Listing and organizing directory contents</li>
+                                <li><strong>Command Combination:</strong> Using pipes and redirection to combine commands</li>
+                            </ul>
+                        </div>
+
+                        <div class="mt-4">
+                            <h3 class="font-semibold text-lg">Important Terms:</h3>
+                            <ul class="list-disc pl-6 mt-2">
+                                <li><strong>Current Directory:</strong> The folder you're currently working in</li>
+                                <li><strong>Path:</strong> The location of a file or directory in the system</li>
+                                <li><strong>Options:</strong> Additional settings that modify command behavior</li>
+                                <li><strong>Arguments:</strong> The files or directories the command operates on</li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- cp command -->
+                <section class="mb-10 border-b pb-6">
+                    <h2 class="text-xl md:text-2xl font-bold text-blue-700 mb-4">1. cp Command (Copy Files)</h2>
+                    
+                    <div class="bg-gray-50 p-4 rounded-lg mb-4">
+                        <h3 class="font-bold text-lg mb-2">Purpose</h3>
+                        <p>The <code class="bg-gray-200 px-1">cp</code> command is used to copy files and directories. It creates an exact duplicate of the source file(s) in the specified location.</p>
+                    </div>
+                    
+                    <div class="code-container mt-4">
+                        <h3 class="font-bold text-lg mb-2">Basic Examples</h3>
+                        <pre class="language-bash rounded-lg"><code># Copy a single file
+cp source.txt destination.txt
+
+# Copy a file to a different directory
+cp file.txt /path/to/directory/
+
+# Copy multiple files to a directory
+cp file1.txt file2.txt /path/to/directory/
+
+# Copy a directory and all its contents
+cp -r source_dir destination_dir</code></pre>
+                        <button class="clipboard-button" onclick="copyToClipboard(this)">Copy Code</button>
+                    </div>
+
+                    <div class="mt-4">
+                        <h3 class="font-bold text-lg mb-2">Step-by-Step Guide</h3>
+                        <ol class="list-decimal pl-6 space-y-2">
+                            <li>Open your terminal</li>
+                            <li>Navigate to the directory containing your files using <code class="bg-gray-200 px-1">cd</code></li>
+                            <li>Use <code class="bg-gray-200 px-1">ls</code> to verify the files are present</li>
+                            <li>Run the copy command</li>
+                            <li>Verify the copy was successful using <code class="bg-gray-200 px-1">ls</code></li>
+                        </ol>
+                    </div>
+
+                    <div class="bg-yellow-50 p-4 rounded-lg mt-4 border-l-4 border-yellow-500">
+                        <h3 class="font-bold text-lg mb-2">Common Options</h3>
+                        <ul class="list-disc pl-6">
+                            <li><code class="bg-gray-200 px-1">-r</code> or <code class="bg-gray-200 px-1">-R</code>: Copy directories recursively (including all subdirectories)</li>
+                            <li><code class="bg-gray-200 px-1">-i</code>: Ask before overwriting existing files</li>
+                            <li><code class="bg-gray-200 px-1">-v</code>: Show what is being copied (verbose mode)</li>
+                            <li><code class="bg-gray-200 px-1">-p</code>: Preserve file attributes (permissions, timestamps)</li>
+                            <li><code class="bg-gray-200 px-1">-u</code>: Copy only when source is newer than destination</li>
+                        </ul>
+                    </div>
+
+                    <div class="mt-4">
+                        <h3 class="font-bold text-lg mb-2">Practice Exercise</h3>
+                        <ol class="list-decimal pl-6 space-y-2">
+                            <li>Create a new directory: <code class="bg-gray-200 px-1">mkdir practice</code></li>
+                            <li>Create a test file: <code class="bg-gray-200 px-1">echo "Hello World" > test.txt</code></li>
+                            <li>Copy the file: <code class="bg-gray-200 px-1">cp test.txt practice/</code></li>
+                            <li>Verify the copy: <code class="bg-gray-200 px-1">ls practice/</code></li>
+                        </ol>
+                    </div>
+                </section>
+
+                <!-- ls command -->
+                <section class="mb-10 border-b pb-6">
+                    <h2 class="text-xl md:text-2xl font-bold text-blue-700 mb-4">2. ls Command (List Files)</h2>
+                    
+                    <div class="bg-gray-50 p-4 rounded-lg mb-4">
+                        <h3 class="font-bold text-lg mb-2">Purpose</h3>
+                        <p>The <code class="bg-gray-200 px-1">ls</code> command lists the contents of a directory. It's one of the most frequently used commands in UNIX.</p>
+                    </div>
+                    
+                    <div class="code-container mt-4">
+                        <h3 class="font-bold text-lg mb-2">Basic Examples</h3>
+                        <pre class="language-bash rounded-lg"><code># List files in current directory
+ls
+
+# List files with details (permissions, size, date)
+ls -l
+
+# List all files including hidden ones (starting with .)
+ls -a
+
+# List files sorted by size (largest first)
+ls -lS
+
+# List files sorted by modification time (newest first)
+ls -lt
+
+# List files with human-readable sizes
+ls -lh
+
+# List files in a specific directory
+ls /path/to/directory/
+
+# List files matching a pattern
+ls *.txt</code></pre>
+                        <button class="clipboard-button" onclick="copyToClipboard(this)">Copy Code</button>
+                    </div>
+
+                    <div class="mt-4">
+                        <h3 class="font-bold text-lg mb-2">Understanding the Output</h3>
+                        <p>When using <code class="bg-gray-200 px-1">ls -l</code>, the output shows:</p>
+                        <ul class="list-disc pl-6 mt-2">
+                            <li>File permissions (e.g., -rw-r--r--)</li>
+                            <li>Number of links</li>
+                            <li>Owner name</li>
+                            <li>Group name</li>
+                            <li>File size</li>
+                            <li>Last modified date and time</li>
+                            <li>File name</li>
+                        </ul>
+                    </div>
+
+                    <div class="bg-yellow-50 p-4 rounded-lg mt-4 border-l-4 border-yellow-500">
+                        <h3 class="font-bold text-lg mb-2">Common Options</h3>
+                        <ul class="list-disc pl-6">
+                            <li><code class="bg-gray-200 px-1">-l</code>: Long format listing with details</li>
+                            <li><code class="bg-gray-200 px-1">-a</code>: Show all files (including hidden ones)</li>
+                            <li><code class="bg-gray-200 px-1">-h</code>: Show sizes in human-readable format</li>
+                            <li><code class="bg-gray-200 px-1">-t</code>: Sort by modification time</li>
+                            <li><code class="bg-gray-200 px-1">-S</code>: Sort by file size</li>
+                            <li><code class="bg-gray-200 px-1">-R</code>: List subdirectories recursively</li>
+                        </ul>
+                    </div>
+
+                    <div class="mt-4">
+                        <h3 class="font-bold text-lg mb-2">Practice Exercise</h3>
+                        <ol class="list-decimal pl-6 space-y-2">
+                            <li>List files in current directory: <code class="bg-gray-200 px-1">ls</code></li>
+                            <li>List with details: <code class="bg-gray-200 px-1">ls -l</code></li>
+                            <li>List all files including hidden: <code class="bg-gray-200 px-1">ls -a</code></li>
+                            <li>List files sorted by size: <code class="bg-gray-200 px-1">ls -lS</code></li>
+                        </ol>
+                    </div>
+                </section>
+
+                <!-- grep command -->
+                <section class="mb-10 border-b pb-6">
+                    <h2 class="text-xl md:text-2xl font-bold text-blue-700 mb-4">3. grep Command (Search Text)</h2>
+                    
+                    <div class="bg-gray-50 p-4 rounded-lg mb-4">
+                        <h3 class="font-bold text-lg mb-2">Purpose</h3>
+                        <p>The <code class="bg-gray-200 px-1">grep</code> command searches for text patterns in files. It's extremely useful for finding specific information in files.</p>
+                    </div>
+                    
+                    <div class="code-container mt-4">
+                        <h3 class="font-bold text-lg mb-2">Basic Examples</h3>
+                        <pre class="language-bash rounded-lg"><code># Search for a word in a file
+grep "hello" file.txt
+
+# Search case-insensitive (ignores upper/lower case)
+grep -i "hello" file.txt
+
+# Search in all files in a directory
+grep -r "hello" /path/to/directory/
+
+# Show line numbers with matches
+grep -n "hello" file.txt
+
+# Count number of matches
+grep -c "hello" file.txt
+
+# Show 2 lines before and after each match
+grep -C 2 "hello" file.txt
+
+# Search for multiple words
+grep -e "hello" -e "world" file.txt
+
+# Show lines that don't match
+grep -v "hello" file.txt</code></pre>
+                        <button class="clipboard-button" onclick="copyToClipboard(this)">Copy Code</button>
+                    </div>
+
+                    <div class="mt-4">
+                        <h3 class="font-bold text-lg mb-2">Understanding grep Output</h3>
+                        <p>When grep finds a match, it shows:</p>
+                        <ul class="list-disc pl-6 mt-2">
+                            <li>The file name (if searching multiple files)</li>
+                            <li>The line number (if using -n)</li>
+                            <li>The complete line containing the match</li>
+                        </ul>
+                    </div>
+
+                    <div class="bg-yellow-50 p-4 rounded-lg mt-4 border-l-4 border-yellow-500">
+                        <h3 class="font-bold text-lg mb-2">Common Options</h3>
+                        <ul class="list-disc pl-6">
+                            <li><code class="bg-gray-200 px-1">-i</code>: Case-insensitive search</li>
+                            <li><code class="bg-gray-200 px-1">-r</code> or <code class="bg-gray-200 px-1">-R</code>: Search recursively in directories</li>
+                            <li><code class="bg-gray-200 px-1">-n</code>: Show line numbers</li>
+                            <li><code class="bg-gray-200 px-1">-c</code>: Count matches</li>
+                            <li><code class="bg-gray-200 px-1">-v</code>: Show non-matching lines</li>
+                            <li><code class="bg-gray-200 px-1">-C</code>: Show context around matches</li>
+                            <li><code class="bg-gray-200 px-1">-e</code>: Specify multiple patterns</li>
+                        </ul>
+                    </div>
+
+                    <div class="mt-4">
+                        <h3 class="font-bold text-lg mb-2">Practice Exercise</h3>
+                        <ol class="list-decimal pl-6 space-y-2">
+                            <li>Create a test file: <code class="bg-gray-200 px-1">echo "Hello World\nGoodbye World" > test.txt</code></li>
+                            <li>Search for "Hello": <code class="bg-gray-200 px-1">grep "Hello" test.txt</code></li>
+                            <li>Search case-insensitive: <code class="bg-gray-200 px-1">grep -i "hello" test.txt</code></li>
+                            <li>Count matches: <code class="bg-gray-200 px-1">grep -c "World" test.txt</code></li>
+                        </ol>
+                    </div>
+                </section>
+
+                <!-- Command Combinations -->
+                <section class="mb-10 border-b pb-6">
+                    <h2 class="text-xl md:text-2xl font-bold text-blue-700 mb-4">4. Combining Commands</h2>
+                    
+                    <div class="bg-gray-50 p-4 rounded-lg mb-4">
+                        <h3 class="font-bold text-lg mb-2">Purpose</h3>
+                        <p>UNIX commands can be combined using pipes (<code class="bg-gray-200 px-1">|</code>) and redirection to perform powerful operations. This allows you to use the output of one command as input for another.</p>
+                    </div>
+                    
+                    <div class="code-container mt-4">
+                        <h3 class="font-bold text-lg mb-2">Basic Examples</h3>
+                        <pre class="language-bash rounded-lg"><code># Count number of files in current directory
+ls | wc -l
+
+# Find files containing a word and show their names
+grep -l "hello" *.txt
+
+# List the 5 largest files
+ls -lS | head -n 5
+
+# Search in multiple files and show line numbers
+grep -n "hello" *.txt
+
+# Copy files matching a pattern to a directory
+ls *.txt | xargs cp -t /path/to/directory/
+
+# Find and replace text in multiple files
+grep -l "old_text" *.txt | xargs sed -i 's/old_text/new_text/g'
+
+# List files modified in the last 7 days
+find . -type f -mtime -7 -ls</code></pre>
+                        <button class="clipboard-button" onclick="copyToClipboard(this)">Copy Code</button>
+                    </div>
+
+                    <div class="mt-4">
+                        <h3 class="font-bold text-lg mb-2">Understanding Command Combinations</h3>
+                        <p>Key concepts for combining commands:</p>
+                        <ul class="list-disc pl-6 mt-2">
+                            <li><strong>Pipe (|):</strong> Sends output of one command to another</li>
+                            <li><strong>Redirection (>):</strong> Sends output to a file</li>
+                            <li><strong>Append (>>):</strong> Adds output to end of a file</li>
+                            <li><strong>xargs:</strong> Uses output as arguments for another command</li>
+                        </ul>
+                    </div>
+
+                    <div class="bg-yellow-50 p-4 rounded-lg mt-4 border-l-4 border-yellow-500">
+                        <h3 class="font-bold text-lg mb-2">Common Combinations</h3>
+                        <ul class="list-disc pl-6">
+                            <li><code class="bg-gray-200 px-1">command1 | command2</code>: Pipe output of command1 to command2</li>
+                            <li><code class="bg-gray-200 px-1">command > file.txt</code>: Save output to a file</li>
+                            <li><code class="bg-gray-200 px-1">command >> file.txt</code>: Append output to a file</li>
+                            <li><code class="bg-gray-200 px-1">command1 && command2</code>: Run command2 only if command1 succeeds</li>
+                        </ul>
+                    </div>
+
+                    <div class="mt-4">
+                        <h3 class="font-bold text-lg mb-2">Practice Exercise</h3>
+                        <ol class="list-decimal pl-6 space-y-2">
+                            <li>Create multiple test files: <code class="bg-gray-200 px-1">touch file1.txt file2.txt file3.txt</code></li>
+                            <li>Count the files: <code class="bg-gray-200 px-1">ls | wc -l</code></li>
+                            <li>List only .txt files: <code class="bg-gray-200 px-1">ls *.txt</code></li>
+                            <li>Save file list to a file: <code class="bg-gray-200 px-1">ls > files.txt</code></li>
+                        </ol>
+                    </div>
+                </section>
+
+                <section class="mb-8">
+                    <h2 class="text-xl md:text-2xl font-bold text-blue-700 mb-4">Summary</h2>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p>In this lab, we've learned essential UNIX commands for file and text manipulation:</p>
+                        <ul class="list-disc pl-6 mt-2">
+                            <li><strong>cp:</strong> Copy files and directories with various options</li>
+                            <li><strong>ls:</strong> List directory contents with different display formats</li>
+                            <li><strong>grep:</strong> Search for text patterns in files</li>
+                            <li><strong>Command Combinations:</strong> Use pipes and redirection to combine commands</li>
+                        </ul>
+                        <p class="mt-4">These commands form the foundation of file and text manipulation in UNIX/Linux systems. Practice using them regularly to become proficient.</p>
+                        
+                        <div class="mt-4">
+                            <h3 class="font-bold text-lg">Next Steps:</h3>
+                            <ul class="list-disc pl-6 mt-2">
+                                <li>Practice each command with different options</li>
+                                <li>Try combining commands to solve problems</li>
+                                <li>Create your own examples and test them</li>
+                                <li>Explore the manual pages (<code class="bg-gray-200 px-1">man command</code>) for more options</li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+            </main>
+
+            <footer class="text-center text-gray-500 text-sm mt-8">
+                <p>© 2025 Advanced UNIX Commands Lab Experiment</p>
+            </footer>
+        </div>
+    </div>
+
+    <script>
+        function copyToClipboard(button) {
+            const container = button.parentElement;
+            const codeBlock = container.querySelector('code');
+            const textToCopy = codeBlock.textContent;
+            
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                const originalText = button.textContent;
+                button.textContent = 'Code Copied!';
+                button.style.backgroundColor = '#10B981';
+                
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.style.backgroundColor = '#334155';
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+                button.textContent = 'Copy Failed!';
+                button.style.backgroundColor = '#EF4444';
+                
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.style.backgroundColor = '#334155';
+                }, 2000);
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            Prism.highlightAll();
+
+            // Sidebar toggle functionality
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.getElementById('mainContent');
+
+            sidebarToggle.addEventListener('click', (e) => {
+                e.stopPropagation();
+                sidebar.classList.toggle('active');
+                mainContent.classList.toggle('sidebar-active');
+            });
+
+            // Close sidebar when clicking outside on mobile
+            document.addEventListener('click', (e) => {
+                if (window.innerWidth <= 768) {
+                    if (!sidebar.contains(e.target) && !sidebarToggle.contains(e.target)) {
+                        sidebar.classList.remove('active');
+                        mainContent.classList.remove('sidebar-active');
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Memory Allocation Methods</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.25.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.25.0/components/prism-c.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.25.0/themes/prism-tomorrow.min.css">
+    <style>
+        .clipboard-button {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+            background: #334155;
+            color: white;
+            border: none;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            opacity: 0.7;
+        }
+        .clipboard-button:hover {
+            opacity: 1;
+        }
+        .code-container {
+            position: relative;
+        }
+        .sidebar {
+            width: 250px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            background-color: #1e293b;
+            color: white;
+            padding: 1rem;
+            overflow-y: auto;
+            z-index: 1000;
+            transition: transform 0.3s ease;
+        }
+        .sidebar-toggle {
+            position: fixed;
+            top: 0;
+            left: 0;
+            padding: 1rem;
+            background-color: #1e293b;
+            color: white;
+            cursor: pointer;
+            z-index: 1001;
+            display: none;
+        }
+        .main-content {
+            margin-left: 250px;
+            transition: margin-left 0.3s ease;
+            padding: 1rem;
+        }
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            .sidebar.active {
+                transform: translateX(0);
+            }
+            .sidebar-toggle {
+                display: block;
+            }
+            .main-content {
+                margin-left: 0;
+                padding: 1rem;
+            }
+            .main-content.sidebar-active {
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
+    <div class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle Sidebar">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+    </div>
+
+    <div class="sidebar" id="sidebar">
+        <div class="flex items-center space-x-2 mb-6">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+            </svg>
+            <h2 class="text-xl font-bold text-white">Experiments</h2>
+        </div>
+        <ul class="space-y-2">
+            <li><a href="exp1.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 1: Basic UNIX Commands</a></li>
+            <li><a href="exp2.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 2: UNIX System Calls</a></li>
+            <li><a href="exp3.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 3: Advanced UNIX Commands</a></li>
+            <li><a href="exp4.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 4: CPU Scheduling</a></li>
+            <li><a href="exp5.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 5: Port Control</a></li>
+            <li><a href="exp6.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 6: Thread Basics</a></li>
+            <li><a href="exp7.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 7: Producer-Consumer</a></li>
+            <li><a href="exp8.html" class="block py-2 px-4 bg-blue-600 rounded transition duration-200">Experiment 8: Memory Allocation</a></li>
+            <li><a href="exp9.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 9: Page Replacement</a></li>
+            <li><a href="exp10.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 10: Paging Technique</a></li>
+            <li><a href="exp11.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 11: Banker's Algorithm</a></li>
+            <li><a href="exp12.html" class="block py-2 px-4 hover:bg-blue-700 rounded transition duration-200">Experiment 12: File Allocation</a></li>
+        </ul>
+    </div>
+
+    <div class="main-content" id="mainContent">
+        <div class="container mx-auto px-4 py-8 max-w-4xl">
+            <header class="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-6 rounded-t-lg shadow-lg">
+                <div class="flex items-center space-x-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-blue-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+                    </svg>
+                    <div>
+                        <h1 class="text-2xl md:text-3xl font-bold">Lab Experiment: Memory Allocation Methods</h1>
+                        <p class="text-blue-100 mt-1">Understanding First Fit, Worst Fit, and Best Fit allocation</p>
+                    </div>
+                </div>
+            </header>
+
+            <main class="bg-white p-6 rounded-b-lg shadow-lg mb-8">
+                <section class="mb-8">
+                    <h2 class="text-xl md:text-2xl font-bold text-blue-700 mb-4">Aim</h2>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p>To implement and understand different memory allocation methods: First Fit, Worst Fit, and Best Fit.</p>
+                    </div>
+                </section>
+
+                <section class="mb-8">
+                    <h2 class="text-xl md:text-2xl font-bold text-blue-700 mb-4">Theory</h2>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p class="mb-4">Memory allocation methods determine how to assign memory blocks to processes:</p>
+                        
+                        <div class="mt-4">
+                            <h3 class="font-semibold text-lg">1. First Fit</h3>
+                            <ul class="list-disc pl-6 mt-2">
+                                <li>Allocates the first available block that is large enough</li>
+                                <li>Fast but may lead to fragmentation</li>
+                                <li>Like finding the first parking spot that fits your car</li>
+                            </ul>
+                        </div>
+
+                        <div class="mt-4">
+                            <h3 class="font-semibold text-lg">2. Worst Fit</h3>
+                            <ul class="list-disc pl-6 mt-2">
+                                <li>Allocates the largest available block</li>
+                                <li>Leaves large blocks for future use</li>
+                                <li>Like choosing the biggest available parking spot</li>
+                            </ul>
+                        </div>
+
+                        <div class="mt-4">
+                            <h3 class="font-semibold text-lg">3. Best Fit</h3>
+                            <ul class="list-disc pl-6 mt-2">
+                                <li>Allocates the smallest available block that is large enough</li>
+                                <li>Minimizes wasted space but slower</li>
+                                <li>Like finding the smallest parking spot that fits your car</li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="mb-10 border-b pb-6">
+                    <h2 class="text-xl md:text-2xl font-bold text-blue-700 mb-4">Implementation</h2>
+                    
+                    <div class="bg-gray-50 p-4 rounded-lg mb-4">
+                        <h3 class="font-bold text-lg mb-2">Description</h3>
+                        <p>This program demonstrates all three memory allocation methods using a simple example:</p>
+                        <ul class="list-disc pl-6 mt-2">
+                            <li>Fixed memory blocks of different sizes</li>
+                            <li>Processes requesting memory of different sizes</li>
+                            <li>Clear visualization of allocation process</li>
+                        </ul>
+                    </div>
+
+                    <div class="code-container mt-4">
+                        <h3 class="font-bold text-lg mb-2">Program Code</h3>
+                        <pre class="language-c rounded-lg"><code>#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+
+// Let's keep it simple with 5 memory blocks
+#define NUM_BLOCKS 5
+
+// Structure to represent a memory block
+typedef struct {
+    int size;        // Size of the block
+    int is_allocated; // 1 if allocated, 0 if free
+    int process_id;   // ID of the process using this block
+} MemoryBlock;
+
+// Function to print memory status
+void print_memory(MemoryBlock memory[], int num_blocks) {
+    printf("\nCurrent Memory Status:\n");
+    printf("Block\tSize\tStatus\t\tProcess\n");
+    printf("--------------------------------\n");
+    for (int i = 0; i < num_blocks; i++) {
+        printf("%d\t%d\t%s\t\t", 
+            i, 
+            memory[i].size,
+            memory[i].is_allocated ? "Allocated" : "Free");
+        if (memory[i].is_allocated) {
+            printf("P%d", memory[i].process_id);
+        } else {
+            printf("-");
+        }
+        printf("\n");
+    }
+    printf("--------------------------------\n");
+}
+
+// First Fit Allocation
+int first_fit(MemoryBlock memory[], int num_blocks, int process_size, int process_id) {
+    printf("\nTrying First Fit for Process P%d (Size: %d)...\n", process_id, process_size);
+    
+    for (int i = 0; i < num_blocks; i++) {
+        if (!memory[i].is_allocated && memory[i].size >= process_size) {
+            memory[i].is_allocated = 1;
+            memory[i].process_id = process_id;
+            printf("First Fit: Allocated to Block %d\n", i);
+            return 1; // Success
+        }
+    }
+    printf("First Fit: No suitable block found\n");
+    return 0; // Failure
+}
+
+// Worst Fit Allocation
+int worst_fit(MemoryBlock memory[], int num_blocks, int process_size, int process_id) {
+    printf("\nTrying Worst Fit for Process P%d (Size: %d)...\n", process_id, process_size);
+    
+    int worst_index = -1;
+    int max_size = -1;
+    
+    for (int i = 0; i < num_blocks; i++) {
+        if (!memory[i].is_allocated && memory[i].size >= process_size) {
+            if (memory[i].size > max_size) {
+                max_size = memory[i].size;
+                worst_index = i;
+            }
+        }
+    }
+    
+    if (worst_index != -1) {
+        memory[worst_index].is_allocated = 1;
+        memory[worst_index].process_id = process_id;
+        printf("Worst Fit: Allocated to Block %d\n", worst_index);
+        return 1; // Success
+    }
+    printf("Worst Fit: No suitable block found\n");
+    return 0; // Failure
+}
+
+// Best Fit Allocation
+int best_fit(MemoryBlock memory[], int num_blocks, int process_size, int process_id) {
+    printf("\nTrying Best Fit for Process P%d (Size: %d)...\n", process_id, process_size);
+    
+    int best_index = -1;
+    int min_size = 999999; // A large number
+    
+    for (int i = 0; i < num_blocks; i++) {
+        if (!memory[i].is_allocated && memory[i].size >= process_size) {
+            if (memory[i].size < min_size) {
+                min_size = memory[i].size;
+                best_index = i;
+            }
+        }
+    }
+    
+    if (best_index != -1) {
+        memory[best_index].is_allocated = 1;
+        memory[best_index].process_id = process_id;
+        printf("Best Fit: Allocated to Block %d\n", best_index);
+        return 1; // Success
+    }
+    printf("Best Fit: No suitable block found\n");
+    return 0; // Failure
+}
+
+int main() {
+    // Initialize memory blocks
+    MemoryBlock memory[NUM_BLOCKS] = {
+        {100, 0, -1},  // Block 0: 100KB, free
+        {500, 0, -1},  // Block 1: 500KB, free
+        {200, 0, -1},  // Block 2: 200KB, free
+        {300, 0, -1},  // Block 3: 300KB, free
+        {600, 0, -1}   // Block 4: 600KB, free
+    };
+    
+    printf("Memory Allocation Simulation\n");
+    printf("===========================\n");
+    
+    // Show initial memory status
+    print_memory(memory, NUM_BLOCKS);
+    
+    // Try different allocation methods
+    printf("\n=== First Fit Allocation ===\n");
+    first_fit(memory, NUM_BLOCKS, 212, 1);  // Process 1 needs 212KB
+    print_memory(memory, NUM_BLOCKS);
+    
+    printf("\n=== Worst Fit Allocation ===\n");
+    worst_fit(memory, NUM_BLOCKS, 417, 2);  // Process 2 needs 417KB
+    print_memory(memory, NUM_BLOCKS);
+    
+    printf("\n=== Best Fit Allocation ===\n");
+    best_fit(memory, NUM_BLOCKS, 112, 3);   // Process 3 needs 112KB
+    print_memory(memory, NUM_BLOCKS);
+    
+    return 0;
+}</code></pre>
+                        <button class="clipboard-button" onclick="copyToClipboard(this)">Copy Code</button>
+                    </div>
+
+                    <div class="mt-4">
+                        <h3 class="font-bold text-lg mb-2">Expected Output</h3>
+                        <div class="bg-gray-800 text-gray-100 p-4 rounded-lg">
+                            <pre class="text-sm">Memory Allocation Simulation
+===========================
+
+Current Memory Status:
+Block   Size    Status          Process
+--------------------------------
+0       100     Free            -
+1       500     Free            -
+2       200     Free            -
+3       300     Free            -
+4       600     Free            -
+--------------------------------
+
+=== First Fit Allocation ===
+Trying First Fit for Process P1 (Size: 212)...
+First Fit: Allocated to Block 1
+
+Current Memory Status:
+Block   Size    Status          Process
+--------------------------------
+0       100     Free            -
+1       500     Allocated       P1
+2       200     Free            -
+3       300     Free            -
+4       600     Free            -
+--------------------------------
+
+=== Worst Fit Allocation ===
+Trying Worst Fit for Process P2 (Size: 417)...
+Worst Fit: Allocated to Block 4
+
+Current Memory Status:
+Block   Size    Status          Process
+--------------------------------
+0       100     Free            -
+1       500     Allocated       P1
+2       200     Free            -
+3       300     Free            -
+4       600     Allocated       P2
+--------------------------------
+
+=== Best Fit Allocation ===
+Trying Best Fit for Process P3 (Size: 112)...
+Best Fit: Allocated to Block 2
+
+Current Memory Status:
+Block   Size    Status          Process
+--------------------------------
+0       100     Free            -
+1       500     Allocated       P1
+2       200     Allocated       P3
+3       300     Free            -
+4       600     Allocated       P2
+--------------------------------</pre>
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <h3 class="font-bold text-lg mb-2">Output Explanation</h3>
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <ul class="list-disc pl-6">
+                                <li>Initial state shows 5 memory blocks of different sizes</li>
+                                <li>First Fit: Process P1 (212KB) gets Block 1 (500KB) - first available block that fits</li>
+                                <li>Worst Fit: Process P2 (417KB) gets Block 4 (600KB) - largest available block</li>
+                                <li>Best Fit: Process P3 (112KB) gets Block 2 (200KB) - smallest block that fits</li>
+                                <li>Final state shows how each method allocated memory differently</li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="mb-8">
+                    <h2 class="text-xl md:text-2xl font-bold text-blue-700 mb-4">Summary</h2>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p>In this lab, we've learned about different memory allocation methods:</p>
+                        <ul class="list-disc pl-6 mt-2">
+                            <li><strong>First Fit:</strong> Fast but may lead to fragmentation</li>
+                            <li><strong>Worst Fit:</strong> Uses largest blocks first</li>
+                            <li><strong>Best Fit:</strong> Minimizes wasted space but slower</li>
+                        </ul>
+                        
+                        <div class="mt-4">
+                            <h3 class="font-bold text-lg">Key Points to Remember:</h3>
+                            <ul class="list-disc pl-6 mt-2">
+                                <li>Each method has its own advantages and disadvantages</li>
+                                <li>Choice of method depends on system requirements</li>
+                                <li>Memory fragmentation is an important consideration</li>
+                                <li>Allocation time varies between methods</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="mt-4">
+                            <h3 class="font-bold text-lg">Next Steps:</h3>
+                            <ul class="list-disc pl-6 mt-2">
+                                <li>Try different memory block sizes</li>
+                                <li>Add memory deallocation functionality</li>
+                                <li>Implement memory compaction</li>
+                                <li>Study dynamic memory allocation</li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+            </main>
+
+            <footer class="text-center text-gray-500 text-sm mt-8">
+                <p>© 2025 Memory Allocation Lab Experiment</p>
+            </footer>
+        </div>
+    </div>
+
+    <script>
+        function copyToClipboard(button) {
+            const container = button.parentElement;
+            const codeBlock = container.querySelector('code');
+            const textToCopy = codeBlock.textContent;
+            
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                const originalText = button.textContent;
+                button.textContent = 'Code Copied!';
+                button.style.backgroundColor = '#10B981';
+                
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.style.backgroundColor = '#334155';
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+                button.textContent = 'Copy Failed!';
+                button.style.backgroundColor = '#EF4444';
+                
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.style.backgroundColor = '#334155';
+                }, 2000);
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            Prism.highlightAll();
+
+            // Sidebar toggle functionality
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.getElementById('mainContent');
+
+            sidebarToggle.addEventListener('click', (e) => {
+                e.stopPropagation();
+                sidebar.classList.toggle('active');
+                mainContent.classList.toggle('sidebar-active');
+            });
+
+            // Close sidebar when clicking outside on mobile
+            document.addEventListener('click', (e) => {
+                if (window.innerWidth <= 768) {
+                    if (!sidebar.contains(e.target) && !sidebarToggle.contains(e.target)) {
+                        sidebar.classList.remove('active');
+                        mainContent.classList.remove('sidebar-active');
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
